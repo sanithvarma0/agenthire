@@ -1,0 +1,38 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Local data: database, call recordings, cached search results
+*.db
+*.sqlite
+*.sqlite3
+data/
+recordings/
+spikes/out/
+
+# Event preparation notes and the kickoff deck (personal notes, organiser
+# contact numbers, and a 28 MB file) are not part of the project
+docs/Builders-Kickoff-*.pdf
+docs/builders-event-context.md
+docs/equal-ai-research.md
+docs/Tracks.txt
+
+# Editors and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code's local settings
+.claude/settings.local.json

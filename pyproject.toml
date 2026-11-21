@@ -1,0 +1,28 @@
+[project]
+name = "agenthire"
+version = "0.1.0"
+description = "A voice assistant that hires people for you: it finds people, phones them in their own language, and brings back a shortlist."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # App
+    "fastapi==0.165.0",
+    "uvicorn[standard]==0.54.0",
+    "pydantic==2.14.4",
+    "httpx==0.28.1",
+    "python-dotenv==1.2.4",
+    "pyyaml==6.0.4",
+    "python-multipart==0.0.34",
+    # Models and documents
+    "openai==3.57.0",
+    "pypdf==7.1.1",
+    # Voice (the versions proven on real phone calls in an earlier project)
+    "livekit-api==1.2.2",
+    "livekit-agents[sarvam,silero,turn-detector,openai]==1.8.11",
+    "livekit-plugins-noise-cancellation==0.3.3",
+    # Tests
+    "pytest==9.2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests", "voice/tests", "evals/tests"]
+pythonpath = ["."]

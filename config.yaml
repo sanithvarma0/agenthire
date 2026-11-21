@@ -1,0 +1,79 @@
+# Product settings. These are rules of the product, kept in one place so they
+# can be changed without touching code. Secrets belong in .env, not here.
+
+calling:
+  hours_start: "09:00"        # local time, India
+  hours_end: "20:00"
+  timezone: "Asia/Kolkata"
+  time_cap_seconds: 180       # a call ends at three minutes
+  wrap_up_at_seconds: 150     # the agent is told to wrap up
+  max_calls_per_job: 3
+
+providers:
+  max_shown: 5
+  search_radius_km: 5         # around the user's location from the browser
+  wider_radius_km: 10         # used when fewer than min_results are found within search_radius_km
+  min_results: 3
+  call_top: 2                 # the best ranked are marked to be called; the user can swap them
+  # Open now first, then this score. Builder's decision, 21 Nov: nearness and reviews.
+  ranking_weights:
+    distance: 0.4
+    rating: 0.35
+    review_count: 0.25
+
+# Speech settings, confirmed by test 3 on 21 Nov.
+voice:
+  agent_name: "agenthire"     # the LiveKit agent name jobs are dispatched to
+  stt_model: "saaras:v4"
+  stt_mode: "codemix"
+  # "call": the conversation's starting language (builder's decision, 22 Nov), because
+  # auto-detect ("unknown") wrote Hindi speech in Gujarati, Punjabi, Odia, Bengali and
+  # Malayalam script on a real call. The cost, seen on 21 Nov: fixed to Telugu, Hindi
+  # speech comes back in English letters; fixed to Hindi, Telugu speech is translated
+  # into Hindi; and Sarvam cannot change the language mid-call. "unknown" restores auto-detect.
+  stt_language: "call"
+
+  # Conversations (calls and the voice brief) run on LLM_MODEL_SMART through the Responses
+  # API, streamed. Measured 22 Nov on a mid-call turn: gpt-5.5 at "low" spoke its first words
+  # after 0.8 s and answered honestly; the small model and gpt-5.4 made details up or sounded
+  # scripted.
+  reasoning_effort: "low"
+
+  # Sarvam voices the app may use. `gender` must match the voice: the agent uses
+  # it for gendered word forms, and it follows the voice when the language switches.
+  voices:
+    pooja_te_conversation:   {model: "bulbul:v4-flash", gender: "female"}  # Telugu, conversational
+    kavitha_te_conversation: {model: "bulbul:v4-flash", gender: "female"}  # Telugu, conversational
+    tarun_te_narration:      {model: "bulbul:v4-flash", gender: "male"}    # Telugu, narration style
+    shubh:                   {model: "bulbul:v3",       gender: "male"}    # multilingual
+
+  # Which voice speaks each language. Telugu default chosen by the builder on
+  # 21 Nov after live calls; the other Telugu options are pooja_te_conversation
+  # and tarun_te_narration.
+  language_voice:
+    te: "kavitha_te_conversation"
+    hi: "shubh"
+    en: "shubh"
+
+# Starting values from phone calls in an earlier project; tune during phase 2.
+turn_taking:
+  phone:
+    min_endpointing_seconds: 0.8
+    max_endpointing_seconds: 1.5  # was 3.5: on a live call 7 of 17 turns waited about 2.9 s here
+    min_interruption_seconds: 0.8
+    min_interruption_words: 2
+    greeting_delay_seconds: 1.0
+  unclear_turns_before_ending: 2
+  dead_air_seconds: 3                 # after a turn with no question, quiet this long makes the agent carry on
+  silence_seconds: 10                 # quiet this long after the agent asks something counts as a silence
+  silence_prompts_before_ending: 2    # checks on a quiet line before ending politely
+
+# The real-time avatar: the face of the agent in the voice brief only, never on phone calls.
+# She lip-syncs to our own voice; our engine still decides what she says. If she does not
+# join within join_timeout_seconds, the brief carries on with the orb. Go/no-go 22 Nov:
+# joined a LiveKit room in 1.9 s, video at 2.2 s. The key is AVATAR_API_KEY in .env.
+avatar:
+  enabled: true
+  provider: "synthesia"
+  avatar_ids: ["e929d062-a7b1-4801-a762-b38aabab9fb7"]
+  join_timeout_seconds: 12

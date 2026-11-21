@@ -1,0 +1,221 @@
+# Home-side eval scenarios (docs/LLD.md, section 16).
+#
+# Each scenario runs a full text-mode conversation: the AgentHire agent on one
+# side, a model playing the provider (the persona) on the other. The result is
+# then written from the transcript and grounded, exactly as after a real call.
+#
+# expect:
+#   outcome           the outcome the result must have
+#   facts             per fact: equals (exact value), contains (text in the value),
+#                     date_offset (the value must hold today's date plus this many days)
+#   absent            facts that must not be in the result
+#   language_spoken   the language the result must report
+#   agent_switches_to after the person first speaks, every agent line must be in this language's script
+#   (scenarios without it must stay in the call's language)
+#
+# job.calling is the business the agent asks for when the call is picked up.
+#
+# Persona text is written in English; the persona model speaks in the given language.
+
+- id: available_te
+  description: Telugu electrician who can come tomorrow morning and names his charge only when asked
+  kind: home_call
+  language: te
+  job:
+    calling: Sri Sai Electricals
+    work: in one room the fan and a few switches are not working, and one switchboard gives sparks
+    area: Whitefields, HITEC City, Hyderabad
+    wanted: tomorrow
+  persona: |
+    Your shop is called Sri Sai Electricals.
+    You are a local electrician in Hyderabad. You speak colloquial Hyderabad Telugu, with the English
+    words people normally use. You are friendly but busy. You can come tomorrow at 11 in the morning.
+    Your charge just for coming to look is 200 rupees. Say the time and the charge only when asked.
+  persona_language: Telugu
+  expect:
+    outcome: available
+    facts:
+      available: {equals: "yes"}
+      earliest_time: {date_offset: 1, contains: "11:00"}
+      visiting_charge: {equals: "200"}
+    language_spoken: te
+
+- id: asks_first_te
+  description: Telugu electrician who asks about the problem before answering, as on the first real call
+  kind: home_call
+  language: te
+  job:
+    calling: Lakshmi Electrical Works
+    work: in one room the fan and a few switches are not working, and one switchboard gives sparks
+    area: Whitefields, HITEC City, Hyderabad
+    wanted: tomorrow
+  persona: |
+    Your shop is called Lakshmi Electrical Works.
+    You are a local electrician in Hyderabad. You speak colloquial Hyderabad Telugu. Before you agree to
+    anything, ask two questions, one per turn: first what exactly is happening at the switchboard, then
+    what is wrong with the fan. After those, you can come tomorrow after 10 in the morning, and your charge
+    just for coming to look is 300 rupees. Say the time and the charge only when asked.
+  persona_language: Telugu
+  expect:
+    outcome: available
+    facts:
+      available: {equals: "yes"}
+      earliest_time: {date_offset: 1, contains: " 10:"}  # "after 10"; the agent may get a more exact time
+      visiting_charge: {equals: "300"}
+    language_spoken: te
+
+- id: busy_te
+  description: Telugu electrician who is fully booked and turns the job down
+  kind: home_call
+  language: te
+  job:
+    calling: Venkat Electricals
+    work: the main switch keeps tripping and half the house has no power
+    area: Madhapur, Hyderabad
+    wanted: today or tomorrow
+  persona: |
+    Your shop is called Venkat Electricals.
+    You are a local electrician in Hyderabad. You speak colloquial Hyderabad Telugu. You are fully booked
+    for the next ten days and cannot take this job. You are polite and suggest they find someone else.
+    You do not give a price, since you are not taking the job.
+  persona_language: Telugu
+  expect:
+    outcome: not_available
+    absent: [visiting_charge]
+    language_spoken: te
+
+- id: voicemail
+  description: Voicemail answers instead of a person, as on a real test call
+  kind: home_call
+  language: te
+  job:
+    calling: Ganesh Electricals
+    work: two lights and a fan in the hall are not working since the morning
+    area: Gachibowli, Hyderabad
+    wanted: tomorrow
+  persona: |
+    You are not a person. You are a phone's voicemail. Your first and only reply is the standard greeting,
+    in English: "The person you have called is not available. At the tone, please record your message.
+    When you have finished recording, you may hang up." After that, whatever is said, reply with the hang-up
+    marker.
+  persona_language: English
+  expect:
+    outcome: no_answer
+    absent: [available, earliest_time, visiting_charge]
+
+- id: hindi_reply
+  description: The call is in Telugu, but the electrician understands Telugu and only answers in Hindi
+  kind: home_call
+  language: te
+  job:
+    calling: Al-Noor Electricals
+    work: the geyser is not heating and its switch gets hot
+    area: Kondapur, Hyderabad
+    wanted: as soon as possible
+  persona: |
+    Your shop is called Al-Noor Electricals.
+    You are a local electrician in Hyderabad. You understand Telugu, but you always answer in Hyderabad
+    Hindi (Dakhni style), never in Telugu. You can come tomorrow at 6 in the evening. Your charge just for
+    coming to look is 300 rupees. Say the time and the charge only when asked.
+  persona_language: Hindi
+  expect:
+    outcome: available
+    facts:
+      available: {equals: "yes"}
+      earliest_time: {date_offset: 1, contains: "18:00"}
+      visiting_charge: {equals: "300"}
+    language_spoken: hi
+    agent_switches_to: hi
+
+- id: wrong_number
+  description: The number belongs to someone else, who says so when asked for the shop
+  kind: home_call
+  language: te
+  job:
+    calling: Raju Electricals
+    work: the kitchen light flickers and then goes off
+    area: Indira Nagar, Gachibowli, Hyderabad
+    wanted: tomorrow
+  persona: |
+    You are an ordinary person in Hyderabad, not an electrician, and you have never heard of the shop the
+    caller asks for. You speak colloquial Hyderabad Telugu. Say politely that it is the wrong number.
+  persona_language: Telugu
+  expect:
+    outcome: wrong_number
+    absent: [available, earliest_time, visiting_charge]
+    language_spoken: te
+
+- id: confirm_te
+  description: The call back to the chosen electrician, who confirms the time he offered
+  kind: confirm_call
+  language: te
+  job:
+    calling: Power Electrician
+    work: the kitchen light flickers and one plug point is not working
+    area: Indira Nagar, Gachibowli, Hyderabad
+    address: Flat 302, Sai Residency, Road No 3, Indira Nagar, Gachibowli, Hyderabad
+    offered_time: tomorrow at 10 AM
+    visiting_charge: 800 rupees
+  persona: |
+    Your shop is called Power Electrician. A little while ago this caller phoned you about a kitchen light
+    that flickers and a plug point that does not work, and you said you could come tomorrow at 10 in the
+    morning for 800 rupees. You speak colloquial Hyderabad Telugu. When they ask, confirm 10 tomorrow
+    morning, and ask them to send the address.
+  persona_language: Telugu
+  expect:
+    outcome: available
+    facts:
+      visit_time: {date_offset: 1, contains: "10:00"}
+    language_spoken: te
+
+- id: confirm_moved_te
+  description: The chosen electrician can no longer make the time he offered and moves it to noon
+  kind: confirm_call
+  language: te
+  job:
+    calling: Vicky Electricals
+    work: the kitchen light flickers and one plug point is not working
+    area: Indira Nagar, Gachibowli, Hyderabad
+    address: Flat 302, Sai Residency, Road No 3, Indira Nagar, Gachibowli, Hyderabad
+    offered_time: tomorrow at 10 AM
+    visiting_charge: 500 rupees
+  persona: |
+    Your shop is called Vicky Electricals. A little while ago this caller phoned you about a kitchen light
+    and a plug point, and you said you could come tomorrow at 10 in the morning. Since then another job came
+    up: you cannot come at 10 any more, but you can come tomorrow at 12 noon. You speak colloquial Hyderabad
+    Telugu. Say this when they ask you to confirm 10.
+  persona_language: Telugu
+  expect:
+    outcome: available
+    facts:
+      visit_time: {date_offset: 1, contains: "12:00"}
+    language_spoken: te
+
+- id: brief_te
+  description: The voice brief in Telugu; the user describes a leaking kitchen tap and confirms the summary
+  kind: brief
+  language: te
+  job:
+    area: Indira Nagar, Gachibowli, Hyderabad
+  persona: |
+    You live in Hyderabad and speak colloquial Telugu with some English words. Water is leaking from the tap
+    under your kitchen sink since this morning. Answer briefly. When the assistant reads back what it understood,
+    say yes, that is right.
+  persona_language: Telugu
+  expect:
+    brief: {service_contains: "plumb", work_contains: "tap"}
+
+- id: brief_mixed_en
+  description: The user picked English but speaks Telugu mixed with English, about an AC that is not cooling
+  kind: brief
+  language: en
+  job:
+    area: Indira Nagar, Gachibowli, Hyderabad
+  persona: |
+    You live in Hyderabad. You picked English in the app, but you are more at ease in Telugu, so you speak
+    colloquial Telugu mixed with English words, never full English sentences. Your AC runs but has not been
+    cooling since yesterday. Answer briefly. When the assistant reads back what it understood, say yes.
+  persona_language: Telugu
+  expect:
+    brief: {service_contains: "AC", work_contains: "cool"}
+    agent_switches_to: te
