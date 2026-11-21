@@ -3,14 +3,40 @@
 // pages). No contact details are taken, so nobody here is ever contacted: a screening call
 // for one of them rings the builder's own number instead (the demo fallback).
 
-import { ExternalLink, FileText, Globe, PhoneForwarded, Search, ShieldCheck } from "lucide-react";
-import type { Job, Person } from "../api";
+import { useState } from "react";
+import { Check, ExternalLink, FileText, Globe, PhoneCall, PhoneForwarded, Search, ShieldCheck } from "lucide-react";
+import { api, type Job, type Person } from "../api";
+import { useJob } from "../store";
 import { initials, JobLayout, JobSummary, StepRail } from "../components/Frame";
+
+const MOST = 3; // calling.max_calls_per_job
 
 export function Candidates({ job }: { job: Job }) {
   const crawling = job.step === "sourcing";
   const found = job.people.filter((p) => p.source === "web");
   const note = job.search?.sourced;
+  const [marked, setMarked] = useState<string[]>([]);
+  const [hint, setHint] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const toggle = (id: string) => {
+    setHint(null);
+    if (marked.includes(id)) return setMarked(marked.filter((m) => m !== id));
+    if (marked.length >= MOST) return setHint(`Up to ${MOST} screening calls per role. Untick one to swap.`);
+    setMarked([...marked, id]);
+  };
+
+  const screen = async () => {
+    if (marked.length === 0) return setHint("Tick at least one candidate to screen.");
+    setBusy(true);
+    try {
+      useJob.setState({ job: await api.approve(job.id, found.filter((p) => marked.includes(p.id)).map((p) => p.id)) });
+    } catch (err) {
+      setHint(`Couldn't start the calls: ${(err as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const stage = (
     <>
@@ -34,19 +60,29 @@ export function Candidates({ job }: { job: Job }) {
         ) : (
           <>
             <p className="faint small" style={{ margin: 0 }}>
-              Public profiles that fit the role{note?.seconds ? `, crawled in ${Math.round(note.seconds)} s` : ""}. Check each
-              profile yourself before reaching out.
+              Public profiles that fit the role{note?.seconds ? `, crawled in ${Math.round(note.seconds)} s` : ""}. Tick up
+              to {MOST} to screen by phone.
             </p>
-            <ul className="clist grid">{found.map((p) => <ProfileCard key={p.id} person={p} />)}</ul>
+            <ul className="clist grid">
+              {found.map((p) => <ProfileCard key={p.id} person={p} marked={marked.includes(p.id)} onToggle={() => toggle(p.id)} />)}
+            </ul>
           </>
         )}
       </section>
 
       {found.length > 0 && (
-        <div className="notice warn"><PhoneForwarded size={17} />
-          We never take their numbers, so a screening call for anyone here rings your phone instead, and you answer as them.
-          The result is labelled as answered by you.
-        </div>
+        <>
+          <div className="notice warn"><PhoneForwarded size={17} />
+            We never take their numbers, so a screening call for anyone here rings your phone instead, and you answer as them.
+            The result is labelled as answered by you.
+          </div>
+          {hint && <p className="error" role="alert">{hint}</p>}
+          <div className="controls sticky-actions">
+            <button className="btn" onClick={screen} aria-busy={busy}>
+              <PhoneCall size={17} />{busy ? "Starting…" : marked.length === 0 ? "Tick candidates to screen" : `Screen ${marked.length === 1 ? "this 1" : `these ${marked.length}`}`}
+            </button>
+          </div>
+        </>
       )}
     </>
   );
@@ -71,11 +107,13 @@ export function Candidates({ job }: { job: Job }) {
   return <JobLayout stage={stage} rail={rail} />;
 }
 
-function ProfileCard({ person }: { person: Person }) {
+function ProfileCard({ person, marked, onToggle }: { person: Person; marked: boolean; onToggle: () => void }) {
   const where = [person.company, person.location ?? person.address].filter(Boolean).join(" · ");
   return (
-    <li className="ccard">
-      <span className="avatar-sq sm" aria-hidden="true">{initials(person.name)}</span>
+    <li className={`ccard ${marked ? "marked" : ""}`}>
+      <button className="ctick" onClick={onToggle} aria-pressed={marked} aria-label={`Screen ${person.name}`}>
+        <span className="avatar-sq sm" aria-hidden="true">{marked ? <Check size={18} strokeWidth={3} /> : initials(person.name)}</span>
+      </button>
       <div className="who">
         <strong>{person.name}</strong>
         {person.headline && <span className="headline">{person.headline}</span>}

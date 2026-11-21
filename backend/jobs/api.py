@@ -89,17 +89,16 @@ async def approve(job_id: str, body: Approval, request: Request) -> dict[str, An
     job = job_view(request, job_id)
     if job["step"] != JobStep.AWAITING_APPROVAL.value:
         raise HTTPException(status_code=409, detail=f"the job is at {job['step']}, not waiting for approval")
-    call_top = state.settings.providers.call_top
+    # Home: the top ranked providers. Company: up to the job's call cap; crawled candidates
+    # have no number, so their screening calls ring the builder (docs/LLD.md, section 17).
+    most = (state.settings.calling.max_calls_per_job if job["side"] == Side.COMPANY.value
+            else state.settings.providers.call_top)
     ids = list(dict.fromkeys(body.person_ids))
-    if len(ids) > call_top:
-        raise HTTPException(status_code=422, detail=f"choose at most {call_top}")
+    if len(ids) > most:
+        raise HTTPException(status_code=422, detail=f"choose at most {most}")
     known = {p["id"] for p in job["people"]}
     if unknown := [i for i in ids if i not in known]:
         raise HTTPException(status_code=422, detail=f"not found for this job: {', '.join(unknown)}")
-    if job["side"] == Side.COMPANY.value:
-        # Crawled candidates have no phone number; their screening calls ring the builder
-        # (docs/LLD.md, section 17). Built in task 4.6.
-        raise HTTPException(status_code=409, detail="screening calls are not built yet")
     state.db.approve_people(job_id, ids)
     state.db.set_job_step(job_id, JobStep.CALLING)
     state.bus.publish(job_id, EventType.STEP_CHANGED, {"step": JobStep.CALLING.value, "approved": ids})
@@ -184,7 +183,7 @@ def recent_jobs(request: Request, limit: int = Query(RECENT_JOBS, ge=1, le=MAX_J
 
 def job_summary(db: Any, job: dict[str, Any]) -> dict[str, Any]:
     """One line of History: what was asked, how far it got, and the booking if there was one."""
-    calls = db.list_conversations(job["id"], kind="home_call")
+    calls = [c for c in db.list_conversations(job["id"]) if c["kind"] in ("home_call", "screening_call")]
     booking = (job.get("report") or {}).get("booking")
     booked = None
     if booking:
@@ -197,7 +196,7 @@ def job_summary(db: Any, job: dict[str, Any]) -> dict[str, Any]:
         "brief": job["brief"], "request": job["start"].get("request"), "area": job["start"].get("area"),
         "language": job["start"].get("language"), "error": job.get("error"),
         "found": len(db.list_people(job["id"])), "called": len(calls),
-        "available": sum(1 for c in calls if (c.get("result") or {}).get("outcome") == "available"),
+        "available": sum(1 for c in calls if (c.get("result") or {}).get("outcome") in ("available", "interested")),
         "booked": booked,
     }
 

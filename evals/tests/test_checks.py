@@ -33,7 +33,8 @@ def test_the_scenarios_file_is_valid() -> None:
     scenarios = load_scenarios()
     assert [s["id"] for s in scenarios] == ["available_te", "asks_first_te", "busy_te", "voicemail", "hindi_reply",
                                                "wrong_number", "confirm_te", "confirm_moved_te",
-                                               "brief_te", "brief_mixed_en"]
+                                               "brief_te", "brief_mixed_en", "screening_interested",
+                                               "screening_not_interested"]
     for s in scenarios:
         assert {"kind", "language", "job", "persona", "persona_language", "expect"} <= set(s)
 

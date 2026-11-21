@@ -32,6 +32,7 @@ from backend.settings import Settings, get_settings
 from backend.text_match import words
 from voice.engine.speech_text import has_leaked_tool_text, same_question, unspeakable_characters
 from backend.writers.call_result import transcript_from_events, write_call_result
+from backend.models import FactSpec
 from voice.engine.kinds import build_record
 from voice.text_mode import TextConversation, openai_client
 
@@ -228,14 +229,18 @@ def run_once(scenario: dict[str, Any], run: int, client: Any, settings: Settings
                             type=type_.value, payload=payload, created_at=""))
 
     language = Language(scenario["language"])
+    # A screening scenario lists its approved questions; they become answer_1, answer_2...
+    # as on a real screening call (backend/jobs/calling.py, screening_record).
+    questions = [FactSpec(name=f"answer_{i}", description=f"Their answer to screening question {i}: {q}")
+                 for i, q in enumerate(scenario.get("questions", []), start=1)]
     record = build_record(scenario["kind"], language,
                           time_cap_seconds=settings.calling.time_cap_seconds,
                           wrap_up_at_seconds=settings.calling.wrap_up_at_seconds,
-                          shareable=scenario["job"])
+                          shareable=scenario["job"], extra_facts=questions)
     convo = TextConversation(record, settings=settings, client=client, emit=emit)
     history: list[dict[str, str]] = []
     agent_line = convo.start()
-    for _ in range(MAX_TURNS):
+    for _ in range(scenario.get("max_turns", MAX_TURNS)):
         if convo.ended:
             break
         history.append({"role": "user", "content": agent_line})

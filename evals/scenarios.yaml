@@ -219,3 +219,55 @@
   expect:
     brief: {service_contains: "AC", work_contains: "cool"}
     agent_switches_to: te
+
+# Company side (docs/LLD.md, section 17): a first screening call in English. The questions
+# are the approved posting's, in priority order.
+- id: screening_interested
+  description: Interested candidate who answers the questions plainly and gives salary and notice when asked
+  kind: screening_call
+  language: en
+  max_turns: 20
+  job:
+    calling: Asha Rao
+    company: Nimbus Analytics
+    role: Data Engineer
+    job_description: Build and run data pipelines on AWS with Python, SQL and Airflow. Hyderabad office, hybrid.
+    work_location: Hyderabad, hybrid
+  questions:
+    - Can you walk me through a data pipeline you built on AWS?
+    - How have you used Airflow in your work?
+    - How do you use SQL when building data pipelines?
+  persona: |
+    You are Asha Rao, a data engineer in Hyderabad with four years of experience. You are open to a change.
+    You built a pipeline on AWS that loads app events from S3 into Redshift with Glue and Python, about 20 GB a day.
+    You use Airflow to schedule and monitor those jobs, with retries and alerts. You write SQL for transformations and
+    data-quality checks. You speak Indian English and sometimes mix in a Hindi word. Your current salary is 14 LPA and
+    you expect 18 LPA. Your notice period is 30 days. Give salary and notice only when asked.
+  persona_language: English
+  expect:
+    outcome: interested
+    facts:
+      expected_salary: {contains: "18"}
+      notice_period: {contains: "30"}
+      answer_1: {contains: ""}
+
+- id: screening_not_interested
+  description: Candidate who is not looking for a change; the call should end politely without the questions
+  kind: screening_call
+  language: en
+  job:
+    calling: Ravi Kumar
+    company: Nimbus Analytics
+    role: Data Engineer
+    job_description: Build and run data pipelines on AWS with Python, SQL and Airflow. Hyderabad office, hybrid.
+    work_location: Hyderabad, hybrid
+  questions:
+    - Can you walk me through a data pipeline you built on AWS?
+  persona: |
+    You are Ravi Kumar. You recently joined a new company and are not looking for a change. Say so politely
+    once you hear what the call is about.
+  persona_language: English
+  expect:
+    outcome: not_interested
+    absent: [expected_salary, answer_1]
+

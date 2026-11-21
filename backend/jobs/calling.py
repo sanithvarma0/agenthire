@@ -18,9 +18,10 @@ from typing import Any
 
 from backend.calls import place_call, room_name
 from backend.guardrails import ground_call_result, local_now
-from backend.jobs import reporting
+from backend.jobs import reporting, shortlist
 from backend.jobs.steps import fail, openai_client
-from backend.models import CallResult, ConversationRecord, EventType, JobStep, Language, Outcome, Person
+from backend.models import (SCREENING_KIND, CallResult, ConversationRecord, EventType, FactSpec, JobStep, Language,
+                            Outcome, Person, Side)
 from backend.writers.call_result import transcript_from_events, write_call_result
 from voice.engine.kinds import build_record
 
@@ -60,16 +61,41 @@ def provider_record(job: dict[str, Any], person: Person, settings: Any) -> Conve
     )
 
 
+def screening_record(job: dict[str, Any], person: Person, profile: dict[str, Any], settings: Any) -> ConversationRecord:
+    """What the agent may say on a screening call for this candidate (docs/LLD.md, section
+    17): the company, the role, the approved job description, and the approved questions in
+    priority order as facts to collect. Never the scoring guide."""
+    start, role, posting = job["start"], job["brief"] or {}, job["posting"] or {}
+    questions = [FactSpec(name=f"answer_{i}", description=f"Their answer to screening question {i}: {q['question']}")
+                 for i, q in enumerate(posting.get("questions", []), start=1)]
+    shareable = {"calling": person.name, "company": start["company"],
+                 "role": posting.get("title") or role.get("role", ""),
+                 "job_description": posting.get("job_description", "")}
+    if role.get("location"):
+        shareable["work_location"] = role["location"]
+    said = ". ".join(dict.fromkeys(p for p in (profile.get("headline"), profile.get("experience")) if p))
+    return build_record(
+        SCREENING_KIND, Language.ENGLISH,
+        time_cap_seconds=settings.calling.time_cap_seconds, wrap_up_at_seconds=settings.calling.wrap_up_at_seconds,
+        shareable=shareable, extra_facts=questions,
+        known=[f"Their public profile says: {said}"] if said else [],
+    )
+
+
 async def run_calls(state: Any, job_id: str) -> None:
-    """Call each approved provider in rank order, then move the job on to reporting."""
+    """Call each approved person in order, then move the job on: a home job to reporting,
+    a company job to scoring."""
     db, bus, settings = state.db, state.bus, state.settings
     control = controls(state).setdefault(job_id, CallControl())
     try:
         job = db.get_job(job_id)
+        company = job["side"] == Side.COMPANY.value
+        profiles = {p["id"]: p for p in db.people_view(job_id)}
         for person in db.list_people(job_id, approved_only=True):  # stored best first
             if control.stop:
                 break
-            record = provider_record(job, person, settings)
+            record = (screening_record(job, person, profiles.get(person.id, {}), settings) if company
+                      else provider_record(job, person, settings))
             conversation_id, refused = await place_call(db=db, bus=bus, settings=settings, dialler=state.dialler,
                                                         job_id=job_id, person=person, record=record)
             if refused:
@@ -78,6 +104,11 @@ async def run_calls(state: Any, job_id: str) -> None:
             await wait_for_end(state, job_id, conversation_id, control)
             control.current = None
             await asyncio.to_thread(write_result, state, job_id, conversation_id, person)
+        if company:
+            db.set_job_step(job_id, JobStep.SCORING)
+            bus.publish(job_id, EventType.STEP_CHANGED, {"step": JobStep.SCORING.value, "stopped": control.stop})
+            await asyncio.to_thread(shortlist.build, state, job_id)
+            return
         db.set_job_step(job_id, JobStep.REPORTING)
         bus.publish(job_id, EventType.STEP_CHANGED, {"step": JobStep.REPORTING.value, "stopped": control.stop})
         await asyncio.to_thread(reporting.report, state, job_id)

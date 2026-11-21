@@ -7,7 +7,13 @@ export const OUTCOME_LABELS: Record<string, string> = {
   call_customer: "Wants to talk to you",
   declined: "Declined",
   no_answer: "No answer",
+  interested: "Interested",
+  not_interested: "Not interested",
+  call_later: "Call later",
 };
+
+/** Outcomes that mean the person is taking part (a provider who can come, an interested candidate). */
+export const GOOD_OUTCOMES = new Set(["available", "interested"]);
 
 const DAY = 24 * 60 * 60 * 1000;
 

@@ -8,19 +8,32 @@ import { useEffect, useMemo, useState } from "react";
 import { Ban, CheckCircle2, Clock, FlaskConical, IndianRupee, PhoneCall, PhoneOff, SkipForward, XCircle } from "lucide-react";
 import { api, type CallResultView, type Conversation, type Job, type JobEvent, type Person } from "../api";
 import { initials, JobLayout, StepRail } from "../components/Frame";
-import { formatClock, formatRupees, formatWhen, OUTCOME_LABELS } from "../format";
+import { formatClock, formatRupees, formatWhen, GOOD_OUTCOMES, OUTCOME_LABELS } from "../format";
 import { useJob } from "../store";
 import { Transcript } from "./Brief";
 
 const FACT_LABELS: Record<string, string> = {
   available: "Can come", earliest_time: "When", visiting_charge: "Charge", visit_time: "Visit time",
+  interested: "Interested", expected_salary: "Expected salary", notice_period: "Notice",
 };
 const ENQUIRY_FACTS = ["available", "earliest_time", "visiting_charge"];
 
+function factLabel(name: string): string {
+  const question = name.match(/^answer_(\d+)$/);
+  return question ? `Q${question[1]}` : FACT_LABELS[name] ?? name.replace(/_/g, " ");
+}
+
+/** The facts shown live on a screening call: interest, each question, salary and notice. */
+export function screeningFacts(questions: number): string[] {
+  return ["interested", ...Array.from({ length: questions }, (_, i) => `answer_${i + 1}`), "expected_salary", "notice_period"];
+}
+
 export function Calls({ job }: { job: Job }) {
   const events = useJob((s) => s.events);
+  const company = job.side === "company";
   const approved = job.people.filter((p) => p.approved);
-  const calls = job.conversations.filter((c) => c.kind === "home_call");
+  const calls = job.conversations.filter((c) => c.kind === (company ? "screening_call" : "home_call"));
+  const factNames = company ? screeningFacts(job.posting?.questions.length ?? 0) : ENQUIRY_FACTS;
   const stopping = events.some((e) => e.type === "step_changed" && e.payload.stopping);
   const active = calls.find((c) => c.status === "active");
   const shown = active ?? calls.at(-1) ?? null;
@@ -43,9 +56,9 @@ export function Calls({ job }: { job: Job }) {
   const stage = (
     <>
       {reporting && (
-        <div className="notice warn"><Clock size={17} />All calls are done. Comparing the answers…</div>
+        <div className="notice warn"><Clock size={17} />All calls are done. {company ? "Scoring the answers…" : "Comparing the answers…"}</div>
       )}
-      {person && <CallPanel person={person} conversation={shown} events={events} />}
+      {person && <CallPanel person={person} conversation={shown} events={events} factNames={factNames} />}
       {!reporting && active && (
         <div className="controls">
           <button className="btn ghost" onClick={() => control("skip")} aria-busy={busy === "skip"}><SkipForward size={16} />Skip this one</button>
@@ -61,7 +74,7 @@ export function Calls({ job }: { job: Job }) {
     <>
       <StepRail job={job} />
       <section className="panel tight">
-        <div className="panel-head"><p className="eyebrow">Calls</p><span className="faint small">One at a time, best first</span></div>
+        <div className="panel-head"><p className="eyebrow">Calls</p><span className="faint small">{company ? "One at a time" : "One at a time, best first"}</span></div>
         {approved.map((p, i) => {
           const conversation = calls.find((c) => c.person_id === p.id) ?? null;
           return <QueueRow key={p.id} person={p} order={i + 1} conversation={conversation} events={events} />;
@@ -86,7 +99,7 @@ function QueueRow({ person, order, conversation, events }: {
         <span className="faint small">
           {conversation?.result && conversation.result.outcome === "available"
             ? [facts.earliest_time && formatWhen(facts.earliest_time), facts.visiting_charge && formatRupees(facts.visiting_charge)].filter(Boolean).join(" · ")
-            : person.distance_km != null ? `${person.distance_km.toFixed(1)} km away` : ""}
+            : person.distance_km != null ? `${person.distance_km.toFixed(1)} km away` : person.headline ?? ""}
         </span>
       </div>
       <span className={`chip ${status.tone}`}>{status.label}</span>
@@ -116,10 +129,10 @@ export function CallPanel({ person, conversation, events, factNames = ENQUIRY_FA
         <span className={`avatar-sq ${live ? "live" : ""}`}>{initials(person.name)}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p className="title md" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{person.name}</p>
-          <span className="faint small">{person.phone}{person.distance_km != null ? ` · ${person.distance_km.toFixed(1)} km away` : ""}</span>
+          <span className="faint small">{person.phone ?? person.headline ?? ""}{person.distance_km != null ? ` · ${person.distance_km.toFixed(1)} km away` : ""}</span>
         </div>
         <span className={`chip ${status.tone}`}>
-          {live ? <PhoneCall size={13} /> : result ? (result.outcome === "available" ? <CheckCircle2 size={13} /> : <XCircle size={13} />) : <PhoneOff size={13} />}
+          {live ? <PhoneCall size={13} /> : result ? (GOOD_OUTCOMES.has(result.outcome) ? <CheckCircle2 size={13} /> : <XCircle size={13} />) : <PhoneOff size={13} />}
           {status.label}{live && talkingSince && <> · <Timer since={talkingSince} /></>}
         </span>
       </div>
@@ -130,7 +143,7 @@ export function CallPanel({ person, conversation, events, factNames = ENQUIRY_FA
         </div>
       )}
       {conversation?.routed_to && (
-        <span className="routed"><FlaskConical size={13} />Test mode: answered by you, not by {person.name}</span>
+        <span className="routed"><FlaskConical size={13} />{person.phone ? "Test mode: answered" : "No number, so this rang you: answered"} by you, not by {person.name}</span>
       )}
       {blocked && <div className="notice bad">{String(blocked.payload.reason ?? "This call was not placed.")}</div>}
 
@@ -153,7 +166,7 @@ function LiveFacts({ events, names }: { events: JobEvent[]; names: string[] }) {
     <div className="facts">
       {names.map((name) => (
         <span key={name} className={`fact ${noted[name] ? "got" : ""}`}>
-          {noted[name] ? factText(name, noted[name]) : `${FACT_LABELS[name]}…`}
+          {noted[name] ? factText(name, noted[name]) : `${factLabel(name)}…`}
         </span>
       ))}
     </div>
@@ -165,7 +178,13 @@ function Result({ result }: { result: CallResultView }) {
   const quotes = uniqueQuotes(result.facts.filter((f) => f.verified !== false));
   return (
     <div className="stack">
-      {result.outcome === "available" ? (
+      {result.outcome === "interested" ? (
+        <div className="facts">
+          {result.facts.filter((f) => f.verified !== false).map((f) => (
+            <span key={f.name} className="fact got">{factLabel(f.name)}: {f.value}</span>
+          ))}
+        </div>
+      ) : result.outcome === "available" ? (
         <div className="numbers">
           <div className="num"><span><Clock size={12} />When</span><strong>{facts.earliest_time || facts.visit_time ? formatWhen(facts.earliest_time ?? facts.visit_time) : "Not said"}</strong></div>
           <div className="num"><span><IndianRupee size={12} />Visit</span><strong>{facts.visiting_charge ? formatRupees(facts.visiting_charge) : "Not said"}</strong></div>
@@ -185,7 +204,7 @@ export function callStatus(conversation: Conversation | null, events: JobEvent[]
   const mine = events.filter((e) => e.conversation_id === conversation.id);
   if (mine.some((e) => e.type === "guardrail_blocked")) return { label: "Not called", tone: "bad" };
   const result = conversation.result;
-  if (result) return { label: OUTCOME_LABELS[result.outcome] ?? result.outcome, tone: result.outcome === "available" ? "good" : "bad" };
+  if (result) return { label: OUTCOME_LABELS[result.outcome] ?? result.outcome, tone: GOOD_OUTCOMES.has(result.outcome) ? "good" : "bad" };
   if (mine.some((e) => e.type === "conversation_ended")) return { label: "Writing up…", tone: "" };
   if (mine.some((e) => e.type === "agent_said" || e.type === "person_said")) return { label: "Talking", tone: "good" };
   return { label: "Ringing…", tone: "warn" };
@@ -204,6 +223,9 @@ export function factText(name: string, value: string): string {
   if (name === "available") return value.toLowerCase() === "yes" ? "Can come" : "Can't come";
   if (name === "earliest_time" || name === "visit_time") return formatWhen(value);
   if (name === "visiting_charge") return `${formatRupees(value)} visit`;
+  if (name === "interested") return value.toLowerCase() === "yes" ? "Interested" : "Not interested";
+  if (/^answer_\d+$/.test(name)) return `${factLabel(name)} answered`;
+  if (name in FACT_LABELS) return `${FACT_LABELS[name]}: ${value}`;
   return value;
 }
 

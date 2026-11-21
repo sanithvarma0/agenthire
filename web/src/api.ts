@@ -96,6 +96,34 @@ export interface Report {
   unavailable?: string[];
   notice?: string;
   booking?: Booking;
+  // Company side: the ranked shortlist after the screening calls.
+  shortlist?: ShortlistEntry[];
+  questions?: string[];
+}
+
+export interface ScoredAnswer {
+  question: number;
+  text: string;
+  answer: string | null;
+  score?: number;
+  quote?: string;
+  reason?: string;
+}
+
+export interface ShortlistEntry {
+  person_id: string;
+  name: string;
+  headline: string;
+  conversation_id: string;
+  routed: boolean;
+  outcome: string;
+  details: Record<string, { value: string; said_as: string }>;
+  answers: ScoredAnswer[];
+  score: number | null;
+  scored: number;
+  asked: number;
+  summary: string;
+  rank?: number;
 }
 
 export interface Booking {

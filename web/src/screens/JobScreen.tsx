@@ -12,6 +12,7 @@ import { Candidates } from "./Candidates";
 import { PostingEditor, Writing } from "./Posting";
 import { Finding, Providers } from "./Providers";
 import { Report } from "./Report";
+import { Shortlist } from "./Shortlist";
 import { stepLabel } from "./Start";
 
 export function JobScreen({ jobId, onRestart }: { jobId: string; onRestart: () => void }) {
@@ -39,6 +40,8 @@ export function JobScreen({ jobId, onRestart }: { jobId: string; onRestart: () =
     if (job.step === "briefing" || job.step === "writing") return <Writing job={job} />;
     if (job.step === "awaiting_posting") return <PostingEditor job={job} />;
     if (job.step === "sourcing" || job.step === "awaiting_approval") return <Candidates job={job} />;
+    if (job.step === "calling" || job.step === "scoring") return <Calls job={job} />;
+    if (job.step === "done") return <Shortlist job={job} onRestart={onRestart} />;
   }
   if (job.step === "briefing" || job.step === "finding") return <Finding job={job} />;
   if (job.step === "awaiting_approval") return <Providers job={job} onApproved={() => void refresh()} />;
