@@ -14,11 +14,11 @@ dependencies = [
     "python-multipart==0.0.34",
     # Models and documents
     "openai==3.57.0",
-    "pypdf==7.1.1",
     # Voice (the versions proven on real phone calls in an earlier project)
     "livekit-api==1.2.2",
     "livekit-agents[sarvam,silero,turn-detector,openai]==1.8.11",
     "livekit-plugins-noise-cancellation==0.3.3",
+    "livekit-plugins-synthesia==1.8.11",  # the real-time avatar in the voice brief
     # Tests
     "pytest==9.2.0",
 ]

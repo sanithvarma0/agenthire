@@ -159,7 +159,9 @@ def load_settings(config_path: Path | None = None, env_path: Path | None = None)
     return Settings(
         calling=rules["calling"],
         providers=rules["providers"],
-        voice=rules["voice"],
+        # AGENT_NAME lets a deployed server register its worker under its own name, so a
+        # laptop's worker and the server's never take each other's calls.
+        voice={**rules["voice"], **({"agent_name": os.environ["AGENT_NAME"]} if os.getenv("AGENT_NAME") else {})},
         turn_taking=rules["turn_taking"],
         avatar=rules.get("avatar", {}),
         secrets=secrets,
