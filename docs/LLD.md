@@ -391,6 +391,8 @@ The record carries the approved questions, the company and role names, the candi
 
 **Screens** (same night theme and `JobLayout`): a "Hiring" entry on the top bar opens Hire Start (company name, then talk or type); Role Brief (the Brief screen with the `role_brief` kind); Posting (editable job description, questions and guide; Approve); Candidates (stage: applicants first, with their match score, tick to screen, and the apply link to copy; then the sourced profiles as cards marked display only, with Invite; rail: progress, the role and the approved posting); Calls (the home-side Calls screen); Shortlist (ranked cards: the mean score, each question's score with the candidate's quote, salary, notice, location, and the transcript).
 
+**As built (Sun 22 Nov, 5 AM).** Outcomes per kind come from `outcome_meanings(kind)` in `backend/models.py`. `place_call` sends a candidate with no number through `can_dial_fallback` (builder's phone; approval and the call cap checked). `backend/jobs/shortlist.py` runs after the calls: `backend/writers/scoring.py` scores each interested candidate's answers, each score is kept only if its quote passes `check_fact` against the cited transcript line, and the ranked list goes into `jobs.report.shortlist` before the job moves to `done`.
+
 **Build order** (tasks in `BUILD_PLAN.md`): 4.2 role brief, posting writer and approval; 4.3 sourcing and its display; 4.4 and 4.5 dropped (no apply page or invite); 4.6 screening call kind, calls and result; 4.7 scoring and the shortlist. Check: the builder applies, is called, and appears in the ranked shortlist with quoted scores.
 
 ## 16. Evals

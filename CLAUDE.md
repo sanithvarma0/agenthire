@@ -27,6 +27,7 @@ Run everything through the project environment (Python 3.12 in `.venv`), from th
 - Logs from background runs go to `data/backend.log` and `data/worker.log` (git-ignored). Set `DATABASE_PATH` to a scratch file for throwaway checks so `data/agenthire.db` stays clean.
 - **Indian-script input in manual checks:** send it from Python, not curl. Git Bash passes curl arguments through the Windows code page and Telugu arrives as question marks.
 - **Check the keys in `.env`:** `.venv\Scripts\python scripts\check_keys.py`. It prints status only and uses only the standard library.
+- **Deploy:** `bash deploy/provision.sh` once (AWS, ap-south-1, c7i.xlarge, Elastic IP), then `bash deploy/push.sh <ip>` for each release (deploys GitHub's `main`; refuses while a job on the server is calling). The server's worker uses `AGENT_NAME=agenthire-cloud`. As of Sun 22 Nov, 5 AM the AWS account is not yet activated for any service, so nothing is deployed.
 - **Install libraries:** `uv pip install <package>` with the environment active. On the venue Wi-Fi the package index drops in and out, so a failed install is usually worth one retry. Add anything installed to `pyproject.toml` with its version.
 
 More commands are added here as they come to exist.
