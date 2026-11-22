@@ -32,7 +32,7 @@ from livekit.agents.llm import ChatContext, ChatMessage
 # thread, and importing one inside a job fails ("Plugins must be registered on the main thread").
 from livekit.plugins import sarvam, silero, synthesia
 
-from backend.models import ConversationRecord, EventType, Language
+from backend.models import SCREENING_KIND, ConversationRecord, EventType, Language
 from backend.settings import Settings, get_settings
 from voice.engine.kinds import get_kind
 from voice.engine.speech_text import clean_for_speech, strip_leaked_tool_text
@@ -226,7 +226,9 @@ async def wait_until_answered(ctx: JobContext, participant: rtc.RemoteParticipan
         ctx.room.off("participant_attributes_changed", check)
 
 
-def turn_handling(settings: Settings, on_phone: bool) -> dict[str, Any]:
+def turn_handling(settings: Settings, on_phone: bool, long_answers: bool = False) -> dict[str, Any]:
+    """LiveKit's turn settings. The voice brief and screening calls wait longer before taking
+    a pause as the end of a turn: people there describe or explain at length."""
     phone = settings.turn_taking.phone
     try:
         from livekit.agents import inference
@@ -244,9 +246,9 @@ def turn_handling(settings: Settings, on_phone: bool) -> dict[str, Any]:
             "discard_audio_if_uninterruptible": False,
         },
     }
-    if on_phone:
-        handling["endpointing"] = {"min_delay": phone.min_endpointing_seconds,
-                                   "max_delay": phone.max_endpointing_seconds}
+    timing = phone if on_phone and not long_answers else settings.turn_taking.long_answers
+    handling["endpointing"] = {"min_delay": timing.min_endpointing_seconds,
+                               "max_delay": timing.max_endpointing_seconds}
     return handling
 
 
@@ -322,7 +324,8 @@ async def entrypoint(ctx: JobContext) -> None:
     session = AgentSession(
         stt=sarvam.STT(language=stt_language(voice.stt_language, record.language), model=voice.stt_model,
                        mode=voice.stt_mode),
-        tts=tts, vad=ctx.proc.userdata["vad"], turn_handling=turn_handling(settings, on_phone),
+        tts=tts, vad=ctx.proc.userdata["vad"],
+        turn_handling=turn_handling(settings, on_phone, long_answers=record.kind == SCREENING_KIND),
     )
     turn_lock = asyncio.Lock()
     hanging_up = asyncio.Event()
@@ -379,14 +382,25 @@ async def entrypoint(ctx: JobContext) -> None:
     transcript_at: float | None = None    # when their final transcript reached the engine
     first_words_at: float | None = None   # when the model's first words arrived
 
-    async def run_turn(produce: Any, *args: Any) -> None:
+    # What the person said that no reply has taken yet. A person who pauses mid-thought is
+    # heard as several short turns; any that arrive while a reply is in progress are joined
+    # and answered once, not one by one.
+    unanswered: list[str] = []
+
+    async def run_turn(produce: Any, *args: Any, lines: list[str] | None = None) -> None:
         """One agent turn: the reply is computed off the event loop and spoken as it
         streams, a sentence at a time, so the first words are heard while the model is
         still writing the rest. Then hang up if the conversation ended, or start
-        listening for a silence."""
+        listening for a silence. With `lines`, the reply is to everything in it, taken
+        once the turn's lock is held."""
         async with turn_lock:
             if convo.ended:
                 return
+            if lines is not None:
+                if not lines:
+                    return
+                args = (" ".join(lines),)
+                lines.clear()
             before = convo.state.reply_language
             pieces: asyncio.Queue[str | None] = asyncio.Queue()
             convo.on_text = lambda piece: loop.call_soon_threadsafe(pieces.put_nowait, piece)
@@ -415,7 +429,10 @@ async def entrypoint(ctx: JobContext) -> None:
         transcript_at = time.perf_counter()
         stop_silence_timer()
         dead_air_used = False
-        await run_turn(convo.reply, text)
+        unanswered.append(text)
+        if len(unanswered) > 1:
+            return  # a reply is already waiting for its turn, and will take this line too
+        await run_turn(convo.reply, lines=unanswered)
 
     async def enforce_time_cap() -> None:
         """Wrap up near the end of the allowed time, and hang up at the cap whatever happens."""

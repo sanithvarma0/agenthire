@@ -83,8 +83,14 @@ class PhoneTurnTaking(BaseModel):
     greeting_delay_seconds: float
 
 
+class LongAnswerTurnTaking(BaseModel):
+    min_endpointing_seconds: float
+    max_endpointing_seconds: float
+
+
 class TurnTaking(BaseModel):
     phone: PhoneTurnTaking
+    long_answers: LongAnswerTurnTaking
     unclear_turns_before_ending: int
     dead_air_seconds: float
     silence_seconds: float

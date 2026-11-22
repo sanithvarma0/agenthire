@@ -68,6 +68,14 @@ turn_taking:
     min_interruption_seconds: 0.8
     min_interruption_words: 2
     greeting_delay_seconds: 1.0
+  # The voice briefs (browser) and screening calls (phone): people describe a problem or a
+  # role, or explain their experience, at length and with pauses. LiveKit's default (0.3 s)
+  # cut a role brief on 22 Nov into four turns ("who has around." / "3 years." / "and" /
+  # "Some relevant skills in."), each answered on its own, and Sarvam's transcript often
+  # arrived after the turn had already been closed. Calls to tradespeople keep `phone`.
+  long_answers:
+    min_endpointing_seconds: 1.2
+    max_endpointing_seconds: 3.5
   unclear_turns_before_ending: 2
   dead_air_seconds: 3                 # after a turn with no question, quiet this long makes the agent carry on
   silence_seconds: 10                 # quiet this long after the agent asks something counts as a silence
