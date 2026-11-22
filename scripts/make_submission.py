@@ -93,7 +93,7 @@ def main() -> int:
     if not has_video and ("VIDEO_LINK_HERE" in video_md or not video_md):
         print("Warning: no video file added and VIDEO.md has no link yet.")
     has_slides = any(e.suffix.lower() in (".pdf", ".pptx") for e in extras) or any(
-        f.lower().endswith((".pdf", ".pptx")) and "slides" in f.lower() for f in files)
+        f.lower().endswith((".pdf", ".pptx")) for f in files)
     if not has_slides:
         print("Warning: no slides (.pdf or .pptx) added.")
 
