@@ -439,6 +439,17 @@ def test_wrap_up_tells_the_agent_to_close() -> None:
     assert "Time is nearly up" in sent[-2]["content"] and sent[-1]["content"].startswith("Status for you only")
 
 
+def test_time_up_says_goodbye_and_ends() -> None:
+    # The first live screening call was cut mid-question at the cap; now a goodbye is said.
+    model = FakeModel(message("opening"), message("థ్యాంక్స్ అన్నా, బై."))
+    convo, _ = conversation(model)
+    convo.start()
+    assert convo.time_up() == "థ్యాంక్స్ అన్నా, బై."
+    assert "Time is up. Ask nothing more" in model.requests[-1]["messages"][-2]["content"]
+    assert convo.ended and convo.state.end_reason == "time cap reached"
+    assert convo.time_up() is None
+
+
 def test_an_endless_goodbye_is_cut_short() -> None:
     # The pattern from an eval run: outcome known at once, then goodbye after goodbye.
     model = FakeModel(message("opening"),

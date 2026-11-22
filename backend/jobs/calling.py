@@ -76,7 +76,8 @@ def screening_record(job: dict[str, Any], person: Person, profile: dict[str, Any
     said = ". ".join(dict.fromkeys(p for p in (profile.get("headline"), profile.get("experience")) if p))
     return build_record(
         SCREENING_KIND, Language.ENGLISH,
-        time_cap_seconds=settings.calling.time_cap_seconds, wrap_up_at_seconds=settings.calling.wrap_up_at_seconds,
+        time_cap_seconds=settings.calling.screening_time_cap_seconds,
+        wrap_up_at_seconds=settings.calling.screening_wrap_up_at_seconds,
         shareable=shareable, extra_facts=questions,
         known=[f"Their public profile says: {said}"] if said else [],
     )
@@ -128,7 +129,8 @@ async def wait_for_end(state: Any, job_id: str, conversation_id: str, control: C
     """Until the worker reports the call over. A skip closes the room; a call that never
     reports is ended here, so the job cannot hang."""
     settings = state.settings
-    limit = RING_SECONDS + settings.calling.time_cap_seconds + REPORT_GRACE_SECONDS
+    cap = max(settings.calling.time_cap_seconds, settings.calling.screening_time_cap_seconds)
+    limit = RING_SECONDS + cap + REPORT_GRACE_SECONDS
     waited, skip_deadline = 0.0, None
     while not _ended(state, job_id, conversation_id):
         if control.skip and skip_deadline is None:

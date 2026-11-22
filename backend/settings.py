@@ -24,6 +24,8 @@ class CallingRules(BaseModel):
     timezone: str
     time_cap_seconds: int
     wrap_up_at_seconds: int
+    screening_time_cap_seconds: int
+    screening_wrap_up_at_seconds: int
     max_calls_per_job: int
 
 

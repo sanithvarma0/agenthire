@@ -192,6 +192,14 @@ class TextConversation:
             return None
         return self._turn({"role": "system", "content": CUES["wrap_up"]})
 
+    def time_up(self) -> str | None:
+        """The time cap is reached: a short goodbye, then the conversation ends (the runner
+        hangs up after it is spoken), rather than cutting the line mid-sentence."""
+        if self.ended:
+            return None
+        self.state.closing_reason = "time cap reached"
+        return self._turn({"role": "system", "content": CUES["time_up"]})
+
     def close(self, reason: str) -> None:
         """End from outside, for example when the other person hangs up."""
         if not self.ended:

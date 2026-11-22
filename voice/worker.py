@@ -46,6 +46,8 @@ ANSWER_TIMEOUT_SECONDS = 75
 # phone only once this worker is in the room, so a phone joins within seconds; a user
 # in the browser may take a while to tap the orb.
 JOIN_TIMEOUT_SECONDS = {"phone": 60, "browser": 300}
+# At the time cap: how long the turn in progress plus a goodbye may take before the line is cut.
+GOODBYE_SECONDS = 20
 
 
 def backend_url() -> str:
@@ -442,9 +444,16 @@ async def entrypoint(ctx: JobContext) -> None:
             if not convo.ended and not turn_lock.locked():
                 await run_turn(convo.wrap_up)
         await asyncio.sleep(max(0.0, record_.time_cap_seconds - convo.state.seconds_elapsed))
-        if not convo.ended:
-            log.info("Time cap reached: %s", conversation_id)
-            await hang_up("time cap reached")
+        if convo.ended:
+            return
+        # A short goodbye after the turn in progress, not a line cut mid-question (the
+        # first live screening call was dropped while the agent was asking its last one).
+        log.info("Time cap reached, saying goodbye: %s", conversation_id)
+        try:
+            await asyncio.wait_for(run_turn(convo.time_up), timeout=GOODBYE_SECONDS)
+        except TimeoutError:
+            log.warning("Goodbye took longer than %s s: %s", GOODBYE_SECONDS, conversation_id)
+        await hang_up("time cap reached")  # does nothing if the goodbye already hung up
 
     @session.on("user_state_changed")
     def _user_state(ev: Any) -> None:

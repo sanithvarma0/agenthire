@@ -84,6 +84,8 @@ CUES = {
                   "goodbye.",
     "wrap_up": "Time is nearly up. Wrap up now: if one important thing is still missing, ask for it in "
                "one short question; otherwise thank them and say goodbye.",
+    "time_up": "Time is up. Ask nothing more. In one or two short sentences, thank them, say what happens "
+               "next if the conversation has a next step, and say goodbye.",
 }
 
 

@@ -7,6 +7,10 @@ calling:
   timezone: "Asia/Kolkata"
   time_cap_seconds: 180       # a call ends at three minutes
   wrap_up_at_seconds: 150     # the agent is told to wrap up
+  # Screening calls ask the approved questions plus salary and notice. The first live one
+  # (22 Nov, short answers) reached the last question at 2:58 and was cut at 3:00.
+  screening_time_cap_seconds: 300
+  screening_wrap_up_at_seconds: 255
   max_calls_per_job: 3
 
 providers:
