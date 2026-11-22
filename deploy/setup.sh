@@ -23,7 +23,13 @@ apt-get install -y -q python3.12 python3.12-venv git caddy curl
 id -u agenthire >/dev/null 2>&1 || useradd --system --home "$ROOT" --shell /usr/sbin/nologin agenthire
 mkdir -p "$ROOT"
 if [ -d "$APP/.git" ]; then
-  git -C "$APP" fetch -q origin main && git -C "$APP" reset -q --hard origin/main
+  # The folder belongs to the agenthire user and this runs as root, so git calls it
+  # "dubious ownership" and refuses; inside `&&` that failure was swallowed and a redeploy
+  # restarted the old code. Trust the folder, and fail loudly if the update fails.
+  git config --global --add safe.directory "$APP"
+  git -C "$APP" fetch -q origin main
+  git -C "$APP" reset -q --hard origin/main
+  echo "Code: $(git -C "$APP" log --oneline -1)"
 else
   git clone -q "$REPO" "$APP"
 fi
