@@ -48,12 +48,12 @@ All numbers below were measured on 22 Nov 2026 from the app's own database and l
 
 ## 4. What I built, what I reused, what is simulated
 
-**Built at the event, by me:** everything specific to AgentHire. The data-driven conversation engine and its kinds (brief, role brief, enquiry call, booking call, screening call), the job flows for both sides, the writers (brief, posting, call result, comparison, scoring), the grounding checks, the dialling and messaging guardrails, the voice worker, the web app and its screens, the evals, and the deploy scripts. I wrote it with AI coding agents (Claude Code), which the rules allow.
+**Built at the event, by me:** everything specific to AgentHire. The data-driven conversation engine and its kinds (brief, role brief, enquiry call, booking call, screening call), the job flows for both sides, the writers (brief, posting, call result, comparison, scoring), the grounding checks, the dialling and messaging guardrails, the voice worker, the web app and its screens (including listening live to a call in the browser), the evals, and the deploy scripts. I wrote it with AI coding agents (Claude Code), which the rules allow.
 
 **Reused:** my own earlier project SevaMitra (a voice service agent on the same stack) was the reference for the phone setup (Twilio trunk, LiveKit SIP trunks and dispatch), the worker's structure, turn-taking settings and the browser event-stream client; the organisers confirmed that copying from one's own earlier work is allowed. Open-source libraries (LiveKit Agents, FastAPI, React, Vite, Leaflet and others in `pyproject.toml` and `web/package.json`) and these services: OpenAI (conversations, writers, web search), Sarvam (speech to text and voices), Synthesia (real-time avatar), Google Maps Platform (places and addresses), Twilio (phone calls and SMS), LiveKit Cloud, AWS (the event's account).
 
 **Simulated (test mode, on for the demo):**
-- Providers are real businesses found on Google Maps, but every call and SMS goes to the builder's own phone, and the builder answers as the provider. Results are labelled "answered by you" and never stored as the provider's own words.
+- Providers are real businesses found on Google Maps, but every call and SMS goes to the builder's own phone, and the builder answers as the provider. Results are labelled "answered by you" and never stored as the provider's own words. A PIN-locked switch in the top bar can turn test mode off on the builder's own laptop; it is locked on the live server and in the zip.
 - Candidates are real public profiles found by the web crawl, but they are never contacted: no phone number or email is taken, and each screening call rings the builder, who answers as the candidate.
 - The evals use a model playing the provider or candidate.
 

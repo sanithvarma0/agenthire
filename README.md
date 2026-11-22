@@ -12,7 +12,7 @@ Built solo at Builders 2026 (OpenAI x Equal AI), Hyderabad, 21–22 Nov 2026, in
 
 1. **Brief.** You talk to the assistant in Telugu, Hindi or English (or a mix). A real-time avatar listens and asks what a plumber would need to know, then reads back a one-line summary for your OK.
 2. **Find.** Real plumbers near your location from Google Places, ranked by distance, rating and reviews, shown on a night map.
-3. **Call.** One tap, and it phones the top two, one at a time, in everyday Telugu or Hindi. It sounds like a neighbour calling about a problem at home, and asks when they can come and what they charge. You watch the live transcript.
+3. **Call.** One tap, and it phones the top two, one at a time, in everyday Telugu or Hindi. It sounds like a neighbour calling about a problem at home, and asks when they can come and what they charge. You watch the live transcript, and can tap **Listen live** to hear both voices as the call happens.
 4. **Compare.** Who can come, when, for how much, each quoted from the call, with one recommendation.
 5. **Book.** You pick one. It calls back to confirm the time and texts them your address.
 
@@ -36,6 +36,7 @@ Built solo at Builders 2026 (OpenAI x Equal AI), Hyderabad, 21–22 Nov 2026, in
 ## Safety by default
 
 - **Test mode is the demo toggle, and it is on unless switched off.** Providers are found for real, but every call and SMS goes to the builder's own phone (`DEMO_ROUTE_PHONE`), and results are labelled "answered by you". It is never remembered as the provider's own.
+- **The test-mode switch** in the top bar is locked unless `TEST_MODE_PIN` is set in `.env`. The live server and the submission zip never have a PIN, so they always stay in test mode.
 - Only `place_call` dials, and only through `can_dial`. Only `backend/messages.py` sends messages, and only through `can_message`.
 - Nothing is dialled without the user's tap, and nobody found by the web crawl is ever contacted.
 - The agent never claims to be human. If sincerely asked, it says it is an AI.
