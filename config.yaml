@@ -46,14 +46,19 @@ voice:
     kavitha_te_conversation: {model: "bulbul:v4-flash", gender: "female"}  # Telugu, conversational
     tarun_te_narration:      {model: "bulbul:v4-flash", gender: "male"}    # Telugu, narration style
     shubh:                   {model: "bulbul:v3",       gender: "male"}    # multilingual
+    roopa_en_conversational: {model: "bulbul:v4-flash", gender: "female"}  # English, conversational
+    neha_en_customer:        {model: "bulbul:v4-flash", gender: "female"}  # English, customer service
+    ishita_en_customer:      {model: "bulbul:v4-flash", gender: "female"}  # English, customer service
+    shalini_en_customer:     {model: "bulbul:v4-flash", gender: "female"}  # English, customer service
 
   # Which voice speaks each language. Telugu default chosen by the builder on
   # 21 Nov after live calls; the other Telugu options are pooja_te_conversation
-  # and tarun_te_narration.
+  # and tarun_te_narration. English is female (22 Nov) to match the avatar in the
+  # brief; it also speaks the screening calls.
   language_voice:
     te: "kavitha_te_conversation"
     hi: "shubh"
-    en: "shubh"
+    en: "roopa_en_conversational"
 
 # Starting values from phone calls in an earlier project; tune during phase 2.
 turn_taking:
