@@ -3,14 +3,20 @@
 #
 #   bash deploy/provision.sh
 #
-# Makes, in ap-south-1 (Mumbai): an SSH key pair saved to ~/.ssh/agenthire.pem, a security
+# Makes, in us-east-1 (see REGION below): an SSH key pair saved to ~/.ssh/agenthire.pem, a security
 # group (SSH from this machine's IP only; HTTP and HTTPS from anywhere), one c7i.xlarge
 # (4 vCPU, 8 GB, no GPU) running Ubuntu 24.04 with a 30 GB disk, and an Elastic IP so the
 # address survives a stop and start. Prints the address and the site's HTTPS host name.
 # Safe to run again: it reuses what already exists.
 set -euo pipefail
+# Git Bash on Windows rewrites arguments that start with "/" into Windows paths, which
+# broke the image lookup ("/aws/service/..." became "C:/...").
+export MSYS_NO_PATHCONV=1
 
-REGION="${REGION:-ap-south-1}"
+# The event's AWS account (a workshop participant role) allows servers only in us-east-1
+# and us-west-2; Mumbai, Hyderabad and Singapore are refused. us-east-1 is the closer of the
+# two to India (LiveKit's India region, Sarvam) and to OpenAI.
+REGION="${REGION:-us-east-1}"
 TYPE="${INSTANCE_TYPE:-c7i.xlarge}"
 NAME="agenthire"
 KEY_FILE="$HOME/.ssh/agenthire.pem"

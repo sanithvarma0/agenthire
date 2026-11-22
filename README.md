@@ -129,7 +129,7 @@ npm --prefix web test
 
 ## Deploy (AWS)
 
-[`deploy/`](deploy) sets up one server: a c7i.xlarge (4 vCPU, no GPU) in Mumbai, Ubuntu 24.04, Caddy with an automatic HTTPS certificate on `<ip>.sslip.io`, and systemd services for the back end and the worker. The worker restarts itself if LiveKit drops.
+[`deploy/`](deploy) sets up one server: a c7i.xlarge (4 vCPU, no GPU) in us-east-1 (the event's AWS account allows only us-east-1 and us-west-2), Ubuntu 24.04, Caddy with an automatic HTTPS certificate on `<ip>.sslip.io`, and systemd services for the back end and the worker. The worker restarts itself if LiveKit drops.
 
 1. Create the server once; this prints its IP.
 
