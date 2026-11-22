@@ -36,12 +36,14 @@ voice:
   # speech comes back in English letters; fixed to Hindi, Telugu speech is translated
   # into Hindi; and Sarvam cannot change the language mid-call. "unknown" restores auto-detect.
   stt_language: "call"
-  # English speech-to-text from OpenAI instead (builder's trial, 22 Nov): Sarvam heard a
-  # role brief as "who has around." and "Power Delivery Engine.". gpt-live-transcribe
-  # streams while the person speaks; on a test clip it was word for word, final about
-  # 0.8 s after the speech detector saw the end (Sarvam: 0.2 to 0.4 s). It is given the
-  # call's names (person, company, role) as hints. Remove "en" to go back to Sarvam.
-  openai_stt_languages: ["en"]
+  # Languages whose speech-to-text comes from OpenAI instead of Sarvam. Tried for English on
+  # 22 Nov (gpt-live-transcribe, word for word on a test clip) and turned off the same
+  # morning after a live brief and screening call: its final transcript came 1.1 to 2.9 s
+  # after the person stopped (Sarvam: 0.2 to 0.4 s), so the turn detector judged pauses on
+  # text that had not arrived and split sentences ("I'm looking for a" / "Human" / "Human
+  # referral."), and Hindi or Telugu words came back in Japanese and Chinese characters.
+  # Sarvam with the long_answers wait gave a clean, unsplit screening call (08:04).
+  openai_stt_languages: []
   openai_stt_model: "gpt-live-transcribe"
 
   # Conversations (calls and the voice brief) run on LLM_MODEL_SMART through the Responses
