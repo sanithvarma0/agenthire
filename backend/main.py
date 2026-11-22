@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from backend import conversations, dev, events, providers
+from backend import conversations, dev, events, mode, providers
 from backend.calls import Dialler, LiveKitDialler
 from backend.db import Database
 from backend.events import EventBus
@@ -35,6 +35,7 @@ def create_app(settings: Settings | None = None, database: Database | None = Non
     app.include_router(providers.router)
     app.include_router(jobs_api.router)
     app.include_router(roles.router)
+    app.include_router(mode.router)
 
     @app.get("/health")
     def health() -> dict[str, str]:

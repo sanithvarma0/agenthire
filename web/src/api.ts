@@ -236,6 +236,11 @@ export const api = {
     call<Job>(`/jobs/${encodeURIComponent(id)}/approve`, { method: "POST", body: JSON.stringify({ person_ids: personIds }) }),
   voice: (id: string) =>
     call<{ url: string; token: string; room: string }>(`/jobs/${encodeURIComponent(id)}/voice`, { method: "POST" }),
+  mode: () => call<{ test_mode: boolean; switchable: boolean }>("/mode"),
+  setMode: (testMode: boolean, pin: string) =>
+    call<{ test_mode: boolean; switchable: boolean }>("/mode", { method: "POST", body: JSON.stringify({ test_mode: testMode, pin }) }),
+  listen: (id: string) =>
+    call<{ url: string; token: string; room: string; conversation_id: string }>(`/jobs/${encodeURIComponent(id)}/listen`, { method: "POST" }),
   skip: (id: string) => call<{ skipping: string }>(`/jobs/${encodeURIComponent(id)}/skip`, { method: "POST" }),
   pick: (id: string, personId: string) =>
     call<Job>(`/jobs/${encodeURIComponent(id)}/pick`, { method: "POST", body: JSON.stringify({ person_id: personId }) }),

@@ -10,6 +10,7 @@ import { api, type CallResultView, type Conversation, type Job, type JobEvent, t
 import { initials, JobLayout, StepRail } from "../components/Frame";
 import { formatClock, formatRupees, formatWhen, GOOD_OUTCOMES, OUTCOME_LABELS } from "../format";
 import { useJob } from "../store";
+import { ListenLive } from "../components/ListenLive";
 import { Transcript } from "./Brief";
 
 const FACT_LABELS: Record<string, string> = {
@@ -122,6 +123,7 @@ export function CallPanel({ person, conversation, events, factNames = ENQUIRY_FA
   const talkingSince = lines.length ? new Date(lines[0].created_at).getTime() : null;
   const status = callStatus(conversation, events);
   const live = !!conversation && !blocked && !result && !ended;
+  const jobId = useJob((s) => s.jobId);
 
   return (
     <section className="panel call-hero fade-in" key={conversation?.id ?? person.id}>
@@ -142,6 +144,7 @@ export function CallPanel({ person, conversation, events, factNames = ENQUIRY_FA
           {Array.from({ length: 40 }, (_, i) => <span key={i} style={{ animationDelay: `${(i * 83) % 900}ms` }} />)}
         </div>
       )}
+      {live && conversation && jobId && <ListenLive jobId={jobId} conversationId={conversation.id} live={live} />}
       {conversation?.routed_to && (
         <span className="routed"><FlaskConical size={13} />{person.phone ? "Test mode: answered" : "No number, so this rang you: answered"} by you, not by {person.name}</span>
       )}

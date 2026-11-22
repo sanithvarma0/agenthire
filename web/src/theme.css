@@ -573,6 +573,9 @@ button.orb { cursor: pointer; }
 .qitem .who { flex: 1; min-width: 0; }
 .qitem .who strong { display: block; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .quote { margin: 0; padding-left: 12px; border-left: 2px solid var(--good); color: var(--text); font-size: 14.5px; }
+.chip-btn { cursor: pointer; font: inherit; font-size: 12.5px; }
+.chip-btn:hover { filter: brightness(1.15); }
+.listen { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .routed { font-size: 12.5px; color: var(--brand-2); display: inline-flex; align-items: center; gap: 6px; }
 
 /* --- report ---------------------------------------------------------------------- */

@@ -32,6 +32,9 @@ class NoDialler:
     def browser_token(self, *, room, identity):
         return f"token-for-{room}"
 
+    def listen_token(self, *, room, identity):
+        return f"listen-to-{room}"
+
 
 class FakeModel:
     """Answers the brief writer with a fixed brief and keeps what it was asked."""
@@ -95,6 +98,22 @@ def test_a_job_without_a_request_opens_a_voice_brief() -> None:
     assert c.get(f"/jobs/{job['id']}").json()["start"]["address"] == START["address"]
     events = c.app.state.db.list_events(job["id"])
     assert [e.type for e in events] == ["step_changed"] and events[0].payload == {"step": "briefing"}
+
+
+def test_listening_is_only_for_a_live_call() -> None:
+    c = client()
+    job = c.post("/jobs", json=START).json()
+    assert c.post(f"/jobs/{job['id']}/listen").status_code == 409  # only the brief is open, no call
+    db = c.app.state.db
+    ended = db.create_conversation(job["id"], "home_call", "te", {})
+    db.set_conversation_status(ended, "ended")
+    assert c.post(f"/jobs/{job['id']}/listen").status_code == 409  # a finished call cannot be heard
+    live = db.create_conversation(job["id"], "home_call", "te", {})
+    db.set_conversation_status(live, "active")
+    access = c.post(f"/jobs/{job['id']}/listen").json()
+    assert access["room"] == f"call-{live}" and access["token"] == f"listen-to-call-{live}"
+    assert access["conversation_id"] == live
+    assert c.post("/jobs/job_nope/listen").status_code == 404
 
 
 def test_a_typed_request_is_understood_and_providers_are_found_best_first() -> None:

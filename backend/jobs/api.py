@@ -13,8 +13,10 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
+from backend.calls import room_name
+from backend.db import new_id
 from backend.jobs import briefing, calling, confirming, steps
-from backend.models import EventType, JobStart, JobStep, Side
+from backend.models import ConversationStatus, EventType, JobStart, JobStep, Side
 
 router = APIRouter(prefix="/jobs")
 
@@ -74,6 +76,25 @@ def voice(job_id: str, request: Request) -> dict[str, str]:
         return briefing.voice_access(request.app.state, job_id)
     except LookupError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+CALL_KINDS = ("home_call", "screening_call", "confirm_call")
+
+
+@router.post("/{job_id}/listen")
+def listen(job_id: str, request: Request) -> dict[str, str]:
+    """A listen-only token for the phone call this job has live right now, so the web app
+    can play both voices (the agent and the person) as the call happens."""
+    job_view(request, job_id)
+    state = request.app.state
+    live = [c for c in state.db.list_conversations(job_id)
+            if c["kind"] in CALL_KINDS and c["status"] == ConversationStatus.ACTIVE.value]
+    if not live:
+        raise HTTPException(status_code=409, detail="no call is live for this job")
+    room = room_name(live[-1]["id"])
+    token = state.dialler.listen_token(room=room, identity=f"listener-{new_id('l')}")
+    return {"url": state.settings.secrets.livekit_url, "token": token, "room": room,
+            "conversation_id": live[-1]["id"]}
 
 
 class Approval(BaseModel):

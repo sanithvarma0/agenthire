@@ -143,6 +143,9 @@ class Settings(BaseModel):
     avatar: AvatarSettings = Field(default_factory=AvatarSettings)
     secrets: Secrets
     test_mode: bool
+    # The PIN that unlocks the test-mode switch in the web app (backend/mode.py). Empty
+    # means the switch is locked; the deployed server leaves it empty.
+    test_mode_pin: str = ""
     allowed_numbers: list[str]
     demo_route_phone: str
     demo_route_email: str
@@ -179,6 +182,7 @@ def load_settings(config_path: Path | None = None, env_path: Path | None = None)
         # Test mode is on unless it is switched off explicitly, so a missing
         # setting can never lead to dialling a stranger.
         test_mode=_env_flag("TEST_MODE", default=True),
+        test_mode_pin=os.getenv("TEST_MODE_PIN", "").strip(),
         allowed_numbers=allowed,
         demo_route_phone=os.getenv("DEMO_ROUTE_PHONE", ""),
         demo_route_email=os.getenv("DEMO_ROUTE_EMAIL", ""),

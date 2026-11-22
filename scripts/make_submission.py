@@ -41,6 +41,8 @@ def env_for_judges() -> str:
     lines, seen = [], False
     for line in env.split("\n"):
         key = line.split("=", 1)[0].strip()
+        if key == "TEST_MODE_PIN":
+            continue  # never ship the switch's PIN: the judges' copy stays in test mode
         if key in ("AGENT_NAME", "INTERNAL_API_TOKEN"):
             if key == "AGENT_NAME":
                 lines.append(f"AGENT_NAME={JUDGES_AGENT_NAME}")

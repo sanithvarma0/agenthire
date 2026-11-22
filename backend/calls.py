@@ -35,6 +35,8 @@ class Dialler(Protocol):
 
     def browser_token(self, *, room: str, identity: str) -> str: ...
 
+    def listen_token(self, *, room: str, identity: str) -> str: ...
+
 
 class LiveKitDialler:
     """Opens the room, dispatches the voice worker into it, and rings the phone."""
@@ -100,6 +102,21 @@ class LiveKitDialler:
         return (api.AccessToken(s.livekit_api_key, s.livekit_api_secret)
                 .with_identity(identity).with_name("You").with_ttl(timedelta(minutes=15))
                 .with_grants(api.VideoGrants(room_join=True, room=room, can_publish=True, can_subscribe=True))
+                .to_jwt())
+
+    def listen_token(self, *, room: str, identity: str) -> str:
+        """A short-lived token to listen to a live call from the web app: it can only hear
+        (no microphone, no data), and it is hidden, so the voice worker never sees it and
+        cannot mistake it for the person on the phone."""
+        from datetime import timedelta
+
+        from livekit import api
+
+        s = self._settings.secrets
+        return (api.AccessToken(s.livekit_api_key, s.livekit_api_secret)
+                .with_identity(identity).with_name("Listener").with_ttl(timedelta(minutes=10))
+                .with_grants(api.VideoGrants(room_join=True, room=room, can_publish=False, can_publish_data=False,
+                                             can_subscribe=True, hidden=True))
                 .to_jwt())
 
     async def hang_up(self, *, room: str) -> None:

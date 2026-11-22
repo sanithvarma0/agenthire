@@ -6,7 +6,7 @@ import react from "@vitejs/plugin-react";
 // BACKEND_URL points a second dev server at a scratch back end, for checks that should not
 // touch data/agenthire.db.
 const BACKEND = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";
-const API_PATHS = ["/jobs", "/roles", "/apply", "/location", "/providers", "/events", "/conversations", "/health"];
+const API_PATHS = ["/jobs", "/roles", "/apply", "/location", "/providers", "/events", "/conversations", "/health", "/mode"];
 
 export default defineConfig({
   plugins: [react()],

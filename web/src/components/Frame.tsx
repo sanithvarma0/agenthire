@@ -1,12 +1,12 @@
 // The parts every job screen shares: the top bar, the step rail and the job summary. Home and
 // company jobs share the layout; the rail and the summary follow the job's side.
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Briefcase, CalendarCheck, Check, FileText, FlaskConical, History, Languages, ListChecks, MapPin, Mic,
   PhoneCall, Scale, Sparkles, Users, Wrench,
 } from "lucide-react";
-import { roleOf, type Job } from "../api";
+import { api, roleOf, type Job } from "../api";
 import { useJob } from "../store";
 
 const LANGUAGE_NAMES: Record<string, string> = { te: "తెలుగు", hi: "हिंदी", en: "English" };
@@ -44,13 +44,41 @@ export function TopBar({ onHome, onGig, onHire, onHistory, at }: {
           </>
         )}
         {company && job?.start?.company && <span className="chip hide-sm"><Briefcase size={13} />{job.start.company}</span>}
-        {(job?.test_mode ?? true) && (
-          <span className="chip warn" title="Calls and messages go to the builder's phone, not to the people found">
-            <FlaskConical size={13} /><span className="hide-xs">Test mode</span><span className="show-xs">Test</span>
-          </span>
-        )}
+        <ModeSwitch fallback={job?.test_mode ?? true} />
       </div>
     </header>
+  );
+}
+
+/** The test-mode chip. Where the back end has a PIN set (a laptop, never the deployed
+ *  server), it is also the switch: off means the real providers are called. */
+function ModeSwitch({ fallback }: { fallback: boolean }) {
+  const [mode, setMode] = useState<{ test_mode: boolean; switchable: boolean } | null>(null);
+  useEffect(() => { api.mode().then(setMode).catch(() => setMode(null)); }, []);
+  const on = mode?.test_mode ?? fallback;
+
+  const toggle = async () => {
+    if (!mode?.switchable) return;
+    const warning = on
+      ? "Turn test mode OFF?\n\nThe real businesses found on the map will be called and sent SMS (only the ones you approve, within calling hours). Screening calls still ring your phone."
+      : "Turn test mode back ON?\n\nEvery call and SMS will go to your own phone again.";
+    if (!window.confirm(warning)) return;
+    const pin = window.prompt("PIN to change test mode");
+    if (!pin) return;
+    try {
+      setMode(await api.setMode(!on, pin));
+    } catch (err) {
+      window.alert(`Not changed: ${(err as Error).message}`);
+    }
+  };
+
+  const tip = on ? "Calls and messages go to the builder's phone, not to the people found" : "Live: the real providers are called";
+  const label = on ? <><FlaskConical size={13} /><span className="hide-xs">Test mode</span><span className="show-xs">Test</span></>
+    : <><PhoneCall size={13} /><span className="hide-xs">Live calls</span><span className="show-xs">Live</span></>;
+  return mode?.switchable ? (
+    <button className={`chip ${on ? "warn" : "bad"} chip-btn`} onClick={toggle} title={`${tip}. Click to switch (PIN needed).`}>{label}</button>
+  ) : (
+    <span className={`chip ${on ? "warn" : "bad"}`} title={tip}>{label}</span>
   );
 }
 

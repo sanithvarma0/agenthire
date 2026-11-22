@@ -195,6 +195,10 @@ Test mode is on, so **every call rings `DEMO_ROUTE_PHONE`**: answer it and play 
 5. Tick 1 to 3 candidates and tap **Screen**. Your phone rings for each; answer as the candidate (English, with Hindi or Telugu mixed in is fine). The call asks the approved questions, then salary and notice period; up to 5 minutes.
 6. The **Shortlist** ranks them: each answer scored 1 to 5 with the quote it rests on. A score is shown only if that quote is in the transcript.
 
+**Listen live.** While any call is in progress (on the Calls or Confirming screen), tap **Listen live** to hear both sides, the agent and the person, in the browser. It joins the call as a hidden, listen-only participant.
+
+**Test-mode switch.** The **Test mode** chip in the top bar is a switch only when `TEST_MODE_PIN` is set in `.env`; it is locked in this zip and on the live server, so calls always ring `DEMO_ROUTE_PHONE`.
+
 **C. History.** **History** in the top bar lists every request with how it ended. Each job's address (`#/job/<id>`) reopens it at its current step after a reload: everything is stored in SQLite.
 
 ## 8. Where things are
