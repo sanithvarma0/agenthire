@@ -60,7 +60,7 @@ export function Candidates({ job }: { job: Job }) {
         ) : (
           <>
             <p className="faint small" style={{ margin: 0 }}>
-              Public profiles that fit the role{note?.seconds ? `, crawled in ${Math.round(note.seconds)} s` : ""}. Tick up
+              Public profiles that fit the role{note?.seconds ? `, crawled in ${Math.round(note.seconds)} s` : ""}. Tap up
               to {MOST} to screen by phone.
             </p>
             <ul className="clist grid">
@@ -110,9 +110,12 @@ export function Candidates({ job }: { job: Job }) {
 function ProfileCard({ person, marked, onToggle }: { person: Person; marked: boolean; onToggle: () => void }) {
   const where = [person.company, person.location ?? person.address].filter(Boolean).join(" · ");
   return (
-    <li className={`ccard ${marked ? "marked" : ""}`}>
-      <button className="ctick" onClick={onToggle} aria-pressed={marked} aria-label={`Screen ${person.name}`}>
-        <span className="avatar-sq sm" aria-hidden="true">{marked ? <Check size={18} strokeWidth={3} /> : initials(person.name)}</span>
+    // The whole card ticks it (the checkbox on the right is the keyboard and screen-reader way).
+    <li className={`ccard ${marked ? "marked" : ""}`} onClick={onToggle}>
+      <span className="avatar-sq sm" aria-hidden="true">{marked ? <Check size={18} strokeWidth={3} /> : initials(person.name)}</span>
+      <button className="check ctick" aria-pressed={marked} aria-label={`Screen ${person.name}`}
+        onClick={(e) => { e.stopPropagation(); onToggle(); }}>
+        {marked && <Check size={16} strokeWidth={3} />}
       </button>
       <div className="who">
         <strong>{person.name}</strong>
@@ -120,7 +123,8 @@ function ProfileCard({ person, marked, onToggle }: { person: Person; marked: boo
         {where && <span className="faint small">{where}</span>}
         {person.experience && person.experience !== person.headline && <span className="exp small">{person.experience}</span>}
         {person.profile_url && (
-          <a className="plink" href={person.profile_url} target="_blank" rel="noopener noreferrer">
+          <a className="plink" href={person.profile_url} target="_blank" rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}>
             <ExternalLink size={13} />{hostOf(person.profile_url)}
           </a>
         )}
