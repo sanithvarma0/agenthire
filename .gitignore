@@ -36,3 +36,8 @@ Thumbs.db
 
 # Claude Code's local settings
 .claude/settings.local.json
+
+# Submission zip and the demo video (built or recorded locally)
+agenthire-submission*.zip
+*.mp4
+*.mov
