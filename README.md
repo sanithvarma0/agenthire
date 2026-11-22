@@ -4,6 +4,8 @@
 
 Built solo at Builders 2026 (OpenAI x Equal AI), Hyderabad, 21–22 Nov 2026, in the Build Creative track.
 
+**Live demo:** https://3-213-208-226.sslip.io (test mode: every call rings the builder). **Evidence of results, and what is built, reused and simulated:** [docs/SUBMISSION.md](docs/SUBMISSION.md).
+
 ## What it does
 
 **At home: "my kitchen tap is leaking".**
@@ -18,7 +20,7 @@ Built solo at Builders 2026 (OpenAI x Equal AI), Hyderabad, 21–22 Nov 2026, in
 
 1. **Role brief.** HR describes the role by voice or typing. The assistant writes the job description, five screening questions in priority order, and a scoring guide for each. HR edits and approves.
 2. **Candidates.** It crawls the web for public profiles that fit: name, headline, company, location and matching experience. It never takes phone numbers or emails.
-3. **Screen.** HR ticks up to three candidates. A 3-minute English screening call asks the approved questions, understanding Hindi or Telugu mixed in. We never hold the candidates' numbers, so in this demo the call rings the builder, who answers as the candidate, and it is labelled that way everywhere.
+3. **Screen.** HR ticks up to three candidates. An English screening call of up to 5 minutes asks the approved questions, understanding Hindi or Telugu mixed in. We never hold the candidates' numbers, so in this demo the call rings the builder, who answers as the candidate, and it is labelled that way everywhere.
 4. **Shortlist.** Every answer is scored 1–5 against the approved guide. A score is shown only if the candidate's own words behind it are found in the transcript. Content only: never accent, fluency or grammar.
 
 ## Why it is AI-native
