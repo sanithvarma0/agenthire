@@ -95,7 +95,7 @@ cat > /etc/caddy/Caddyfile <<CADDY
 $HOST {
 	encode gzip
 	@api {
-		path /jobs /jobs/* /roles /roles/* /location /location/* /providers/* /health
+		path /jobs /jobs/* /roles /roles/* /location /location/* /providers/* /health /mode
 	}
 	@stream {
 		path /events/stream

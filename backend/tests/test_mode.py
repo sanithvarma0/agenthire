@@ -32,6 +32,24 @@ def test_the_right_pin_switches_it_off_and_on() -> None:
     assert c.post("/mode", json={"test_mode": True, "pin": "2468"}).json()["test_mode"] is True
 
 
+def test_five_wrong_pins_lock_the_switch_even_for_the_right_one() -> None:
+    c = client(pin="1234")
+    for guess in ("0000", "1111", "2222", "3333", "4444"):
+        assert c.post("/mode", json={"test_mode": False, "pin": guess}).status_code == 403
+    assert c.post("/mode", json={"test_mode": False, "pin": "1234"}).status_code == 429
+    assert c.app.state.settings.test_mode is True
+
+
+def test_a_right_pin_resets_the_count() -> None:
+    c = client(pin="1234")
+    for guess in ("0000", "1111", "2222", "3333"):
+        c.post("/mode", json={"test_mode": False, "pin": guess})
+    assert c.post("/mode", json={"test_mode": True, "pin": "1234"}).status_code == 200
+    for guess in ("0000", "1111", "2222", "3333"):
+        assert c.post("/mode", json={"test_mode": False, "pin": guess}).status_code == 403
+    assert c.post("/mode", json={"test_mode": False, "pin": "1234"}).json()["test_mode"] is False
+
+
 def test_it_does_not_switch_while_a_job_is_calling() -> None:
     c = client(pin="2468")
     db = c.app.state.db

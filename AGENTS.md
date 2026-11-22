@@ -197,7 +197,7 @@ Test mode is on, so **every call rings `DEMO_ROUTE_PHONE`**: answer it and play 
 
 **Listen live.** While any call is in progress (on the Calls or Confirming screen), tap **Listen live** to hear both sides, the agent and the person, in the browser. It joins the call as a hidden, listen-only participant.
 
-**Test-mode switch.** The **Test mode** chip in the top bar is a switch only when `TEST_MODE_PIN` is set in `.env`; it is locked in this zip and on the live server, so calls always ring `DEMO_ROUTE_PHONE`.
+**Test-mode switch.** The **Test mode** chip in the top bar is a switch only when `TEST_MODE_PIN` is set in `.env`. It is locked in this zip (no PIN), so calls always ring `DEMO_ROUTE_PHONE`. On the live server the builder holds the PIN; please leave test mode on there, as off means real businesses are called.
 
 **C. History.** **History** in the top bar lists every request with how it ended. Each job's address (`#/job/<id>`) reopens it at its current step after a reload: everything is stored in SQLite.
 

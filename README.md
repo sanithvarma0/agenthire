@@ -36,7 +36,7 @@ Built solo at Builders 2026 (OpenAI x Equal AI), Hyderabad, 21–22 Nov 2026, in
 ## Safety by default
 
 - **Test mode is the demo toggle, and it is on unless switched off.** Providers are found for real, but every call and SMS goes to the builder's own phone (`DEMO_ROUTE_PHONE`), and results are labelled "answered by you". It is never remembered as the provider's own.
-- **The test-mode switch** in the top bar is locked unless `TEST_MODE_PIN` is set in `.env`. The live server and the submission zip never have a PIN, so they always stay in test mode.
+- **The test-mode switch** in the top bar is locked unless `TEST_MODE_PIN` is set in `.env`, and locks for 10 minutes after 5 wrong PINs. The builder's laptop and the live server have the builder's PIN; the submission zip has none, so a copy run from it always stays in test mode.
 - Only `place_call` dials, and only through `can_dial`. Only `backend/messages.py` sends messages, and only through `can_message`.
 - Nothing is dialled without the user's tap, and nobody found by the web crawl is ever contacted.
 - The agent never claims to be human. If sincerely asked, it says it is an AI.

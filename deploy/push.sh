@@ -42,8 +42,7 @@ STAGE=$(mktemp -d)
 cp -r web/dist "$STAGE/dist"
 TOKEN=$("$PY" -c "import secrets; print(secrets.token_hex(24))")
 # Windows line endings would leave a stray carriage return at the end of every key on the server.
-# TEST_MODE_PIN never goes up: the server stays in test mode, whatever the laptop's switch.
-tr -d '\r' < .env | grep -vE '^(AGENT_NAME|INTERNAL_API_TOKEN|BACKEND_URL|DATABASE_PATH|TEST_MODE_PIN)=' > "$STAGE/.env"
+tr -d '\r' < .env | grep -vE '^(AGENT_NAME|INTERNAL_API_TOKEN|BACKEND_URL|DATABASE_PATH)=' > "$STAGE/.env"
 cat >> "$STAGE/.env" <<ENV
 AGENT_NAME=agenthire-cloud
 INTERNAL_API_TOKEN=$TOKEN
