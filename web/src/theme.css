@@ -90,6 +90,15 @@ svg { flex: none; }
    inside its column instead of widening the page. */
 .rail { display: grid; gap: 14px; position: sticky; top: 84px; min-width: 0; }
 .rail > *, .stage > * { min-width: 0; }
+/* The rail stays in view as the page scrolls, so it must fit the window: a live
+   conversation in it (.grow) takes the height that is left and scrolls inside. Taller than
+   the window, the rail's bottom half was cut off and the page had to be scrolled to read it. */
+@media (min-width: 921px) {
+  .rail { max-height: calc(100vh - 104px); display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: thin; }
+  .rail > * { flex: none; }
+  .rail > .grow { flex: 1 1 auto; min-height: 180px; display: flex; flex-direction: column; }
+  .rail > .grow .transcript { flex: 1 1 auto; max-height: none; min-height: 0; }
+}
 @media (max-width: 920px) {
   .page { padding: 18px 14px 40px; }
   .topbar { padding: 12px 14px; }

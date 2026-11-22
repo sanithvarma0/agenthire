@@ -162,7 +162,7 @@ export function Brief({ job }: { job: Job }) {
         <p className="faint small" style={{ margin: "10px 0 0" }}>{company ? `For ${job.start?.company}` : `Near ${job.start?.area}`}</p>
       </section>
       {lines.length > 0 && (
-        <section className="panel tight">
+        <section className="panel tight grow">
           <p className="eyebrow" style={{ marginBottom: 10 }}>Conversation</p>
           <Transcript lines={lines} them="You" agent="Assistant" />
         </section>
