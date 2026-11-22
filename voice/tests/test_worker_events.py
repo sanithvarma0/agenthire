@@ -47,6 +47,50 @@ def test_events_emitted_just_before_closing_are_still_delivered(monkeypatch) -> 
     assert FakeClient.posted == ["conversation_started", "conversation_ended"]
 
 
+def test_an_agent_line_waits_for_its_voice(monkeypatch) -> None:
+    # On screen, the whole line appeared about a second before it was heard.
+    monkeypatch.setattr(worker.httpx, "AsyncClient", FakeClient)
+    FakeClient.posted = []
+
+    async def run() -> list[list[str]]:
+        sink = worker.EventSink(load_settings(), "job_1", "conv_1")
+        seen = []
+        sink.emit(EventType.PERSON_SAID, {"text": "hello"})
+        sink.emit(EventType.AGENT_SAID, {"text": "hi"})
+        await asyncio.sleep(0.05)
+        seen.append(list(FakeClient.posted))  # held: the voice has not started
+        sink.voice_started()
+        await asyncio.sleep(0.05)
+        seen.append(list(FakeClient.posted))
+        sink.emit(EventType.AGENT_SAID, {"text": "while speaking"})  # voice already playing: at once
+        await asyncio.sleep(0.05)
+        seen.append(list(FakeClient.posted))
+        sink.voice_stopped()
+        sink.emit(EventType.AGENT_SAID, {"text": "never voiced"})
+        sink.emit(EventType.CONVERSATION_ENDED, {"reason": "x"})  # releases it first, order kept
+        await sink.close()
+        return seen
+
+    seen = asyncio.run(run())
+    assert seen[0] == ["person_said"]
+    assert seen[1] == ["person_said", "agent_said"]
+    assert seen[2] == ["person_said", "agent_said", "agent_said"]
+    assert FakeClient.posted == ["person_said", "agent_said", "agent_said", "agent_said", "conversation_ended"]
+
+
+def test_a_held_line_is_delivered_on_close(monkeypatch) -> None:
+    monkeypatch.setattr(worker.httpx, "AsyncClient", FakeClient)
+    FakeClient.posted = []
+
+    async def run() -> None:
+        sink = worker.EventSink(load_settings(), "job_1", "conv_1")
+        sink.emit(EventType.AGENT_SAID, {"text": "goodbye"})
+        await sink.close()
+
+    asyncio.run(run())
+    assert FakeClient.posted == ["agent_said"]
+
+
 def test_a_streamed_reply_is_spoken_a_sentence_at_a_time() -> None:
     async def run() -> list[str]:
         pieces: asyncio.Queue = asyncio.Queue()

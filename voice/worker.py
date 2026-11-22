@@ -63,7 +63,12 @@ def internal_headers(settings: Settings) -> dict[str, str]:
 
 
 class EventSink:
-    """Posts events to the back end in order, from any thread, without blocking the call."""
+    """Posts events to the back end in order, from any thread, without blocking the call.
+
+    The agent's lines are held until its voice starts, so the screen shows each line as it
+    is heard: the engine reports a reply once the model has written all of it, which was
+    about a second before the first words were spoken. Any other event releases the held
+    lines first, so the order never changes."""
 
     def __init__(self, settings: Settings, job_id: str, conversation_id: str):
         self._settings = settings
@@ -71,18 +76,46 @@ class EventSink:
         self._conversation_id = conversation_id
         self._loop = asyncio.get_running_loop()
         self._queue: asyncio.Queue[tuple[EventType, dict[str, Any]] | None] = asyncio.Queue()
+        self._held: list[tuple[EventType, dict[str, Any]]] = []
+        self._speaking = False
         self._task = asyncio.create_task(self._run())
 
     def emit(self, type_: EventType, payload: dict[str, Any]) -> None:
         # Called from the event loop and from the thread the conversation turn runs in.
-        self._loop.call_soon_threadsafe(self._queue.put_nowait, (type_, payload))
+        self._loop.call_soon_threadsafe(self._accept, type_, payload)
+
+    def voice_started(self) -> None:
+        """The agent's voice is playing: release its line (called on the event loop)."""
+        self._speaking = True
+        self.release()
+
+    def voice_stopped(self) -> None:
+        self._speaking = False
+
+    def release(self) -> None:
+        """Send any held lines now (called on the event loop), for example after a reply
+        whose voice never started."""
+        for item in self._held:
+            self._queue.put_nowait(item)
+        self._held.clear()
+
+    def _accept(self, type_: EventType, payload: dict[str, Any]) -> None:
+        if type_ == EventType.AGENT_SAID and not self._speaking:
+            self._held.append((type_, payload))
+            return
+        self.release()
+        self._queue.put_nowait((type_, payload))
 
     async def close(self) -> None:
         # Queued the same way as `emit`, so it lands after every event already emitted. Put
         # straight on the queue, it overtook a "conversation ended" emitted just before it,
         # and the back end never heard that the call was over.
-        self._loop.call_soon_threadsafe(self._queue.put_nowait, None)
+        self._loop.call_soon_threadsafe(self._finish_queue)
         await self._task
+
+    def _finish_queue(self) -> None:
+        self.release()
+        self._queue.put_nowait(None)
 
     async def _run(self) -> None:
         async with httpx.AsyncClient(timeout=10, headers=internal_headers(self._settings)) as client:
@@ -439,6 +472,7 @@ async def entrypoint(ctx: JobContext) -> None:
             if first is not None:
                 await session.say(spoken_sentences(first, pieces))
             answer = await work
+            sink.release()  # in case its voice never started (an empty or failed reply)
             if convo.ended:  # including a silence that ended a settled call without a reply
                 await hang_up(convo.state.end_reason or "ended")
                 return
@@ -486,6 +520,10 @@ async def entrypoint(ctx: JobContext) -> None:
         # One line per turn: where the time went between the person stopping and the agent's
         # voice starting. Read it from data/worker.log to tune turn-taking and models.
         nonlocal stopped_at, transcript_at, first_words_at
+        if getattr(ev, "new_state", None) == "speaking":
+            sink.voice_started()
+        elif getattr(ev, "old_state", None) == "speaking":
+            sink.voice_stopped()
         if getattr(ev, "new_state", None) != "speaking" or transcript_at is None:
             return
         now = time.perf_counter()
@@ -534,8 +572,9 @@ async def entrypoint(ctx: JobContext) -> None:
     if opening:
         handle = session.say(opening, allow_interruptions=False)
         log.info("Opening started %.1f s after the answer", time.perf_counter() - answered_at)
-        convo.opening_spoken()
+        convo.opening_spoken()  # held by the sink until the voice starts
         await handle
+        sink.release()
         if not convo.ended and not turn_lock.locked():
             arm_silence_timer(opening)
 
