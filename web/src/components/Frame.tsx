@@ -4,17 +4,17 @@
 import type { ReactNode } from "react";
 import {
   Briefcase, CalendarCheck, Check, FileText, FlaskConical, History, Languages, ListChecks, MapPin, Mic,
-  PhoneCall, Scale, Sparkles, Users,
+  PhoneCall, Scale, Sparkles, Users, Wrench,
 } from "lucide-react";
 import { roleOf, type Job } from "../api";
 import { useJob } from "../store";
 
 const LANGUAGE_NAMES: Record<string, string> = { te: "తెలుగు", hi: "हिंदी", en: "English" };
 
-export type Nav = "start" | "hire" | "history" | "job";
+export type Nav = "choose" | "gig" | "hire" | "history" | "job";
 
-export function TopBar({ onHome, onHire, onHistory, at }: {
-  onHome: () => void; onHire: () => void; onHistory: () => void; at: Nav;
+export function TopBar({ onHome, onGig, onHire, onHistory, at }: {
+  onHome: () => void; onGig: () => void; onHire: () => void; onHistory: () => void; at: Nav;
 }) {
   const job = useJob((s) => s.job);
   const company = job?.side === "company";
@@ -25,9 +25,13 @@ export function TopBar({ onHome, onHire, onHistory, at }: {
         AgentHire
       </button>
       <div className="chips">
+        <button className={`navlink ${at === "gig" || (at === "job" && job && !company) ? "on" : ""}`} onClick={onGig}
+          aria-current={at === "gig" ? "page" : undefined} aria-label="Gig worker">
+          <Wrench size={15} /><span className="hide-xs">Gig</span>
+        </button>
         <button className={`navlink ${at === "hire" || (at === "job" && company) ? "on" : ""}`} onClick={onHire}
-          aria-current={at === "hire" ? "page" : undefined}>
-          <Briefcase size={15} /><span className="hide-xs">Hiring</span>
+          aria-current={at === "hire" ? "page" : undefined} aria-label="IT hire">
+          <Briefcase size={15} /><span className="hide-xs">IT</span>
         </button>
         <button className={`navlink ${at === "history" ? "on" : ""}`} onClick={onHistory}
           aria-current={at === "history" ? "page" : undefined}>

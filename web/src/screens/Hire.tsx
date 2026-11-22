@@ -1,9 +1,10 @@
-// Hire screen (docs/LLD.md, section 17): the company side's start. Left, what AgentHire does
-// for a hiring team; right, the company's name, then the role by voice or typed.
+// IT hire screen (docs/LLD.md, section 17): the company side's start. Left, a picture of what
+// happens; right, the company's name, then the role by voice or typed.
 
 import { useState } from "react";
-import { ArrowRight, Building2, FileText, Keyboard, ListChecks, Mic, PhoneCall } from "lucide-react";
+import { ArrowRight, Building2, FileText, Globe, Keyboard, ListChecks, Mic, PhoneCall } from "lucide-react";
 import { api } from "../api";
+import { HireScene, StepStrip } from "../components/Scenes";
 
 const COMPANY_KEY = "agenthire.company";
 
@@ -46,24 +47,18 @@ export function Hire({ onStarted }: { onStarted: (jobId: string) => void }) {
     <div className="job start fade-in">
       <section className="hero-stage" aria-labelledby="hire-title">
         <div>
-          <p className="eyebrow accent" style={{ marginBottom: 12 }}>For hiring teams</p>
+          <p className="eyebrow blue" style={{ marginBottom: 12 }}>IT hire</p>
           <h1 className="title xl" id="hire-title">
-            Describe the role.<br /><span className="accent">We'll find and screen candidates.</span>
+            Describe the role.<br /><span className="blue">We'll screen candidates.</span>
           </h1>
-          <p className="muted" style={{ margin: "14px 0 0", maxWidth: 520 }}>
-            Tell the assistant who you need. It writes the job description and the screening questions, crawls the
-            web for people who fit, phones the ones you pick for a first screen, and ranks them with their own words as proof.
-          </p>
         </div>
-        <div className="divider" />
-        <ol className="flow" aria-label="How it works">
-          <li><span className="tile"><FileText size={20} /></span>
-            <div><strong>You describe the role</strong><span>By voice or typed. You check the job description and the questions before anything goes out.</span></div></li>
-          <li><span className="tile"><PhoneCall size={20} /></span>
-            <div><strong>It screens the candidates you pick by phone</strong><span>A short first call in English that understands Hindi or Telugu mixed in. You choose who gets called.</span></div></li>
-          <li><span className="tile"><ListChecks size={20} /></span>
-            <div><strong>You get a ranked shortlist</strong><span>Every score quotes what the candidate said, judged on content, never on accent.</span></div></li>
-        </ol>
+        <HireScene />
+        <StepStrip tone="blue" steps={[
+          { icon: FileText, label: "Job description" },
+          { icon: Globe, label: "Web crawl" },
+          { icon: PhoneCall, label: "Screening call" },
+          { icon: ListChecks, label: "Shortlist" },
+        ]} />
       </section>
 
       <aside className="rail">

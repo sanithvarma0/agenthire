@@ -162,7 +162,7 @@ Each step is one function in `backend/jobs/`. A step either finishes and moves t
 | `GET /events/stream?job_id=` | Live events for one job, as server-sent events. Replays stored events first; resumes after `after=` or the `Last-Event-ID` header. The event id is the job's sequence number. A comment line is sent every 15 seconds when idle |
 | `POST /events` | The voice worker reports events and tool calls. Body: `job_id`, optional `conversation_id`, `type`, `payload`. Unknown types are refused. Checks the `X-Internal-Token` header when `INTERNAL_API_TOKEN` is set |
 | `POST /livekit/token` | Lets the browser join a voice room (used by `POST /jobs`) |
-| `GET /jobs?limit=` | Jobs started from the web app, newest first (default 10, at most 100), each with how far it got: people found, enquiry calls made, how many can come, the booking (who, when, charge) and any error. The Start screen's Recent list and the History page both use it |
+| `GET /jobs?limit=` | Jobs started from the web app, newest first (default 10, at most 100), each with how far it got: people found, enquiry calls made, how many can come, the booking (who, when, charge) and any error. The choice page's Recent list and the History page both use it |
 
 ## 9. Voice worker
 
@@ -308,7 +308,8 @@ Night theme (Sun 22 Nov). Every job screen uses one layout (`components/Frame.ts
 
 | Screen | Shows |
 |---|---|
-| Start | Three large language buttons (Telugu, Hindi, English); the address prefilled from the browser location with a box for the house or flat number; recent jobs |
+| Choose | The bare address: "Who do you need?" and two cards, Gig worker (`#/gig`) and IT hire (`#/hire`), each a drawn widget (`components/Scenes.tsx`) and one line; recent jobs of both sides |
+| Start (`#/gig`) | A headline, the gig widget and a four-step icon strip; three large language buttons (Telugu, Hindi, English); the address prefilled from the browser location with a box for the house or flat number |
 | Brief | A live voice conversation with the real-time avatar (Synthesia, lip-synced to the Sarvam voice) and live captions over her video; until her video arrives, or if she does not start, an orb that pulses while the agent speaks and shows bars while it listens, the transcript, and "What I have so far" chips that fill in as facts are noted. Ends when the user confirms the summary by voice |
 | Providers | A night map (Leaflet with Esri's dark gray canvas tiles and place names, no key, tinted towards night blue in CSS; CARTO's dark tiles now ask for a key): the user as a pulsing blue dot, a dashed 5 km ring (10 km when widened), a sweep while searching, then 5 glowing dots appearing best first. Cards below; tapping a dot highlights its card and the other way round. The top 2 marked "Calling these 2", swappable; one tap starts the calls. A test-mode banner says calls ring the builder's phone |
 | Calls | The call in progress on the stage, the queue with each outcome in the rail: ringing, then talking with a timer and a live waveform, the transcript as it happens, and fact chips as they are noted; replaced by the checked result when the call ends. Skip and Stop calls buttons. A rerouted call is labelled "answered by you" |
