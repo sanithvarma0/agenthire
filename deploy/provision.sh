@@ -24,7 +24,9 @@ export AWS_DEFAULT_REGION="$REGION"
 
 if ! aws ec2 describe-key-pairs --key-names "$NAME" >/dev/null 2>&1; then
   mkdir -p "$HOME/.ssh"
-  aws ec2 create-key-pair --key-name "$NAME" --key-type ed25519 --query KeyMaterial --output text > "$KEY_FILE"
+  # The AWS CLI on Windows writes the key with CRLF line endings, which ssh cannot load
+  # ("error in libcrypto: unsupported").
+  aws ec2 create-key-pair --key-name "$NAME" --key-type ed25519 --query KeyMaterial --output text | tr -d '\r' > "$KEY_FILE"
   chmod 600 "$KEY_FILE"
   echo "Key pair saved to $KEY_FILE"
 fi
