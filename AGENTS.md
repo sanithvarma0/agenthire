@@ -2,6 +2,8 @@
 
 AgentHire is a voice assistant that hires people for you. You say who you need; it finds real people, phones them in their own language, and brings back a shortlist with their own words as proof. Two sides: **Gig worker** (a plumber or electrician at home) and **IT hire** (screening candidates for a role).
 
+**Source code:** https://github.com/sanithvarma0/agenthire (public; the same code as this zip).
+
 **Fastest way to see it working: the live deployment, https://3-213-208-226.sslip.io** (no login). It is in test mode, so every phone call rings the builder's phone, and the builder answers as the provider or the candidate.
 
 The rest of this file is how to run it yourself from this zip. `README.md` explains what it is and how it is built; `docs/SUBMISSION.md` has the evidence of results and what is built, reused and simulated.

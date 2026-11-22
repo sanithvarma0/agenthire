@@ -4,7 +4,7 @@
 
 Built solo at Builders 2026 (OpenAI x Equal AI), Hyderabad, 21–22 Nov 2026, in the Build Creative track.
 
-**Live demo:** https://3-213-208-226.sslip.io (test mode: every call rings the builder). **Evidence of results, and what is built, reused and simulated:** [docs/SUBMISSION.md](docs/SUBMISSION.md).
+**Live demo:** https://3-213-208-226.sslip.io (test mode: every call rings the builder). **Code:** https://github.com/sanithvarma0/agenthire. **Run it yourself:** [AGENTS.md](AGENTS.md). **Evidence of results, and what is built, reused and simulated:** [docs/SUBMISSION.md](docs/SUBMISSION.md).
 
 ## What it does
 
