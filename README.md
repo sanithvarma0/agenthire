@@ -67,7 +67,14 @@ The worker holds no model of its own: every turn goes through the same `TextConv
 
 ## Run it locally
 
-Needs Python 3.12, Node 20+, and keys for OpenAI, Sarvam, LiveKit Cloud (with a Twilio SIP trunk), Twilio, Google Maps and Synthesia.
+Needs Node 20+ and keys for OpenAI, Sarvam, LiveKit Cloud (with a Twilio SIP trunk), Twilio, Google Maps and Synthesia. **One command** installs everything (Python 3.12 included, through uv) and starts the back end, the voice worker and the web app on http://localhost:5173:
+
+```bash
+cp .env.example .env    # then fill in the keys
+bash scripts/setup.sh
+```
+
+The same steps by hand (full details in [AGENTS.md](AGENTS.md)):
 
 1. Copy the environment template and fill in the keys. Keep `TEST_MODE=true`, and set `ALLOWED_NUMBERS` and `DEMO_ROUTE_PHONE` to your own phone.
 

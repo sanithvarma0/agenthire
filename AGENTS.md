@@ -64,7 +64,18 @@ Check the keys (prints only whether each is set and reachable, never the values)
 
 **What works with which keys:** with only `OPENAI_API_KEY` you can run the tests, the evals and text mode (section 5). Add Google Maps for providers and addresses, LiveKit and Sarvam for the voice brief in the browser, and the SIP trunk and Twilio for real phone calls.
 
-## 3. Install
+## 3. Install and start in one command
+
+```bash
+cp .env.example .env
+bash scripts/setup.sh
+```
+
+It checks Node.js, installs `uv` if missing (which fetches Python 3.12), installs the pinned Python packages, downloads the voice models, installs the web app's packages, checks the keys (status only), then starts the back end (port 8000), the voice worker (restarts itself) and the web app (port 5173). When it prints **"AgentHire is running"**, open http://localhost:5173. Ctrl+C stops everything; logs are in `data/backend.log`, `data/worker.log` and `data/web.log`. `bash scripts/setup.sh --install` only installs; `--start` only starts. Works on Linux, macOS and Git Bash on Windows.
+
+The rest of this section and section 4 are the same steps by hand.
+
+### Install by hand
 
 From the repository root. On Windows use `.venv\Scripts\python` wherever this says `.venv/bin/python`.
 
@@ -85,7 +96,7 @@ python3.12 -m venv .venv
 .venv/bin/pip install -r /tmp/agenthire-requirements.txt
 ```
 
-## 4. Start everything (three processes)
+## 4. Start everything by hand (three processes)
 
 Run each in its own terminal, from the repository root, in this order.
 
