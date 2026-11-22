@@ -30,6 +30,7 @@ from livekit.agents import Agent, AgentServer, AgentSession, JobContext, JobProc
 from livekit.agents.llm import ChatContext, ChatMessage
 # Every plugin is imported here, at module load: LiveKit registers plugins only on the main
 # thread, and importing one inside a job fails ("Plugins must be registered on the main thread").
+from livekit.plugins import openai as lk_openai
 from livekit.plugins import sarvam, silero, synthesia
 
 from backend.models import SCREENING_KIND, ConversationRecord, EventType, Language
@@ -46,6 +47,8 @@ ANSWER_TIMEOUT_SECONDS = 75
 # phone only once this worker is in the room, so a phone joins within seconds; a user
 # in the browser may take a while to tap the orb.
 JOIN_TIMEOUT_SECONDS = {"phone": 60, "browser": 300}
+# The record's values given to OpenAI speech-to-text as spelling hints (names, not sentences).
+STT_HINTS = ("calling", "company", "role", "work_location")
 # At the time cap: how long the turn in progress plus a goodbye may take before the line is cut.
 GOODBYE_SECONDS = 20
 
@@ -147,6 +150,22 @@ async def spoken_sentences(first: str, pieces: "asyncio.Queue[str | None]") -> A
 
 def _gap(start: float | None, end: float | None) -> str:
     return f"{end - start:.2f} s" if start is not None and end is not None else "-"
+
+
+def speech_to_text(settings: Settings, record: ConversationRecord, vad: Any) -> Any:
+    """Sarvam, or OpenAI for the languages listed in `voice.openai_stt_languages`. OpenAI's
+    streaming model is given the names in this conversation (who, which company, which role)
+    as hints, so they are written as spelled."""
+    voice = settings.voice
+    if record.language.value in voice.openai_stt_languages:
+        hints = [v for k, v in record.shareable.items() if k in STT_HINTS and v and len(v) <= 80]
+        log.info("Speech to text: OpenAI %s (%s), %d name hints", voice.openai_stt_model, record.language.value, len(hints))
+        return lk_openai.STT(model=voice.openai_stt_model, language=record.language.value,
+                             api_key=settings.secrets.openai_api_key, vad=vad,
+                             **({"keywords": hints} if hints else {}))
+    log.info("Speech to text: Sarvam %s (%s)", voice.stt_model, voice.stt_mode)
+    return sarvam.STT(language=stt_language(voice.stt_language, record.language), model=voice.stt_model,
+                      mode=voice.stt_mode)
 
 
 def stt_language(setting: str, language: Language) -> str:
@@ -324,8 +343,7 @@ async def entrypoint(ctx: JobContext) -> None:
     tts = sarvam.TTS(target_language_code=TTS_LANGUAGE[record.language], model=option.model, speaker=speaker)
     log.info("Voice: %s (%s, %s)", speaker, option.model, option.gender)
     session = AgentSession(
-        stt=sarvam.STT(language=stt_language(voice.stt_language, record.language), model=voice.stt_model,
-                       mode=voice.stt_mode),
+        stt=speech_to_text(settings, record, ctx.proc.userdata["vad"]),
         tts=tts, vad=ctx.proc.userdata["vad"],
         turn_handling=turn_handling(settings, on_phone, long_answers=record.kind == SCREENING_KIND),
     )

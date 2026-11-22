@@ -54,6 +54,9 @@ class VoiceSettings(BaseModel):
     stt_model: str
     stt_mode: str
     stt_language: str
+    # Languages whose speech-to-text comes from OpenAI instead of Sarvam, and the model.
+    openai_stt_languages: list[str] = Field(default_factory=list)
+    openai_stt_model: str = "gpt-live-transcribe"
     # The model that holds conversations is LLM_MODEL_SMART (in .env); this is how hard it
     # thinks before each reply. "low" was the fastest to its first words and the most careful
     # when measured on 22 Nov; "none" or "medium" are the alternatives.
