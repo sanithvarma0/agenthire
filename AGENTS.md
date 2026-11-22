@@ -142,9 +142,24 @@ npx --prefix web tsc --noEmit -p web
 .venv/bin/python -m voice.text_mode --language te --calling "Sri Sai Electricals" --work "a ceiling fan is not working" --area "Madhapur, Hyderabad" --when "tomorrow"
 ```
 
-## 6. Logins
+## 6. Logins and seed data
 
-None. There are no accounts or logins: open the site and start.
+None. There are no accounts or logins: open the site and start. No seed data is needed either: the SQLite database is created empty on the first start, and every journey begins from fresh input.
+
+## 6a. For automated reviewers (an AI agent driving a browser)
+
+- **Location:** the Gig worker start screen needs the browser's location and waits for it; a headless browser blocks it by default. Grant the `geolocation` permission and set a position, for example latitude `17.4435`, longitude `78.3772` (HITEC City, Hyderabad). In Playwright: `browser.new_context(permissions=["geolocation"], geolocation={"latitude": 17.4435, "longitude": 78.3772})`. IT hire needs no location.
+- **No microphone:** on both start screens tap **"or type it instead"** and type the request; everything after it is the same. The voice brief itself needs a real microphone.
+- **Phone calls ring a person.** In test mode every call rings `DEMO_ROUTE_PHONE` (the builder's phone in the zip's `.env.example`). An agent cannot answer it: an unanswered call ends as "no answer" after about a minute, and the journey carries on to the comparison or the shortlist with that outcome. To see a whole call, either put a phone you can answer in `DEMO_ROUTE_PHONE` and `ALLOWED_NUMBERS`, or run the same conversation engine in **text mode** or the **evals** (section 5), where you or a model play the provider or the candidate. The demo video shows real calls being answered.
+- **Ports:** web app http://localhost:5173, back end http://127.0.0.1:8000 (`/health`). The live deployment is https://3-213-208-226.sslip.io.
+
+## 6b. What is simulated, mocked or not finished
+
+- **Test mode (on):** providers are real businesses from Google Maps, but every call and SMS goes to `DEMO_ROUTE_PHONE` instead of them, and whoever answers plays the provider. Results are labelled "answered by you" and never stored as the provider's own words.
+- **Candidates:** real public profiles found by the web crawl, never contacted; no phone number or email is taken, so every screening call rings `DEMO_ROUTE_PHONE`.
+- **Evals:** a model plays the provider or the candidate.
+- **Not mocked:** the voice brief, speech to text and voices, the models, the real phone calls (Twilio through LiveKit), the writing, the grounding checks and the shortlist.
+- **Not finished:** no WhatsApp (SMS only); no memory of past providers; speech-to-text keeps the call's starting language, so a call that switches between Telugu and Hindi is understood in the first one. Full notes, with evidence of results: `docs/SUBMISSION.md`.
 
 ## 7. Journeys to try end to end
 
